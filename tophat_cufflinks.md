@@ -27,9 +27,9 @@ We can do lots of fun and scientifically-interesting things with RNA-seq data. I
 ### preliminaries III: what do I need to get started?
 
 * A Linux cluster with the Sun Grid Engine scheduling system. (Definitely not required for RNA-seq analysis, but the workflow described here assumes it).
-* [TopHat](http://tophat.cbcb.umd.edu/) 
+* [TopHat](http://ccb.jhu.edu/software/tophat/index.shtml) 
 * [Cufflinks](http://cufflinks.cbcb.umd.edu/)
-* A reference/index/set of annotations for the organism you're analyzing. I recommend downloading a reference from [this page](http://tophat.cbcb.umd.edu/igenomes.shtml). Any of the choices for your organism are fine. 
+* A reference/index/set of annotations for the organism you're analyzing. I recommend downloading a reference from [this page](http://ccb.jhu.edu/software/tophat/igenomes.shtml). Any of the choices for your organism are fine. 
 * A good text editor. I use [Sublime](http://www.sublimetext.com/) on my laptop, and I transfer files to the cluster using sftp (sometimes with the [Cyberduck](http://cyberduck.io/) GUI). To edit text files directly on the cluster, I use emacs and I open files for editing with `emacs -nw myfile.sh`. When I'm done editing the file, I close it with ctrl-x ctrl-c, then hit "y" to save.
 * Data. This pipeline will work if you're starting with either FASTQ files (raw reads) or .bam files (read alignments). 
 
@@ -93,9 +93,9 @@ P=4 #use 4 threads
 $TOPHAT_BINARY -G $GENE_REFERENCE -p $P -o /ProjectName/alignments/sample${SAMPLE_ID} $BOWTIE_INDEX /ProjectName/data/sample${SAMPLE_ID}_1.fastq /ProjectName/data/sample${SAMPLE_ID}_2.fastq
 ```
 
-Note that there are [a LOT of TopHat parameters you can set](http://tophat.cbcb.umd.edu/manual.shtml). I generally use the defaults for most of them. Above, I specified `-G` and a path to a `genes.gtf` file, which means that I first want to align reads to the _transcriptome_ (i.e., known RNA), and _then_ map any remaining unmapped reads back to the _genome_. (One case where a read would map to the genome but not the transcriptome is if it came from a [retained intron](http://en.wikipedia.org/wiki/Alternative_splicing), so the sequence wouldn't appear in the annotated transcriptome). I also specified `-p` to tell TopHat to use multiple threads/cores (this is very helpful in terms of speed). The one parameter I didn't set above, but that I do want to mention, is the `-r` parameter, the mate inner distance -- if you have paired-end reads, you should set the mate inner distance to be the fragment length minus twice the read length (if you don't know what this means, talk to the person who gave you the data). The default is 50.
+Note that there are [a LOT of TopHat parameters you can set](http://ccb.jhu.edu/software/tophat/manual.shtml). I generally use the defaults for most of them. Above, I specified `-G` and a path to a `genes.gtf` file, which means that I first want to align reads to the _transcriptome_ (i.e., known RNA), and _then_ map any remaining unmapped reads back to the _genome_. (One case where a read would map to the genome but not the transcriptome is if it came from a [retained intron](http://en.wikipedia.org/wiki/Alternative_splicing), so the sequence wouldn't appear in the annotated transcriptome). I also specified `-p` to tell TopHat to use multiple threads/cores (this is very helpful in terms of speed). The one parameter I didn't set above, but that I do want to mention, is the `-r` parameter, the mate inner distance -- if you have paired-end reads, you should set the mate inner distance to be the fragment length minus twice the read length (if you don't know what this means, talk to the person who gave you the data). The default is 50.
 
-I don't really want to make a script by hand for every single sample, nor do I want to manually submit them all with `qsub`. There could be hundreds of samples in my experimen. To get around this, I create a master shell script, `tophat.sh`, in the main project directory. The master script creates the sample-specific scripts automatically, using the syntax `cat > filename.sh >> EOF`, and submits them with `qsub`. For the experiment outlined here, my `tophat.sh` file would look like this:
+I don't really want to make a script by hand for every single sample, nor do I want to manually submit them all with `qsub`. There could be hundreds of samples in my experiment. To get around this, I create a master shell script, `tophat.sh`, in the main project directory. The master script creates the sample-specific scripts automatically, using the syntax `cat > filename.sh >> EOF`, and submits them with `qsub`. For the experiment outlined here, my `tophat.sh` file would look like this:
 
 ```shell
 #!/bin/sh
