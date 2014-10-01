@@ -1,3 +1,13 @@
+---
+output:
+  knitrBootstrap::bootstrap_document:
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
+  html_document:
+    toc: true
+    theme: united
+---
+
 # Analyzing RNA-seq data with the "Tuxedo" tools
 
 _Introduction/tl;dr: I wrote this post as a reference for folks that are getting started with RNA-seq data analysis. It begins with an informal, big-picture overview of RNA-seq data analysis, and the rest of the post outlines one standard RNA-seq workflow (read alignment + transcriptome assembly, no differential expression analysis). Much of this protocol is specific to the JHSPH biostat computing setup._

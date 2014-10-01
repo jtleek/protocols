@@ -6,6 +6,25 @@
   <meta name="generator" content="pandoc" />
   <title></title>
   <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+  </style>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <!-- jQuery -->
@@ -865,11 +884,205 @@
 <div class="container">
 <div class="row row-offcanvas row-offcanvas-right">
 <div class="contents col-xs-12 col-md-10">
-<h1>protocols</h1>
-<p>Here you can find a set of lab analysis protocols.</p>
-<ul>
-<li><a href="tophat_cufflinks/">Analyzing RNA-seq data with the &quot;Tuxedo&quot; tools</a></li>
-<li><a href="travis_bioc_devel/">Routinely testing your R package with Travis</a>
+<h1>Routinely testing your R package with Travis</h1>
+<p>This protocol was contributed by <a href="http://bit.ly/LColladoTorres">L. Collado-Torres</a>.</p>
+<h1>Overview</h1>
+<p>At some point after in the <code>R</code> (<a href='http://www.R-project.org/'>R Core Team, 2014</a>) learning curve you get to a level where you want to write your own functions. The next step is to share the functions in the form of an <code>R</code> package. The Leek group way of doing so is described in more detail <a href="https://github.com/jtleek/rpackages">here</a> (<a href='https://github.com/jtleek/rpackages'>jtleek, 2014</a>).</p>
+<p>Sharing your functions as an <code>R</code> package means that others can easily use them after installing the package. This all sounds great until you then realize that there is some responsibility on your side to make sure things are working properly. <code>R</code> has a command to help you do so, namely <em>R CMD check</em> which verifies that everything is in order.</p>
+<p>Projects like <a href="http://www.bioconductor.org/">Bioconductor</a> (<a href='http://genomebiology.com/2004/5/10/R80'>Gentleman, Carey, Bates, and others, 2004</a>) help both the developer and the user community by running <em>R CMD check</em> on their packages every day. Doing so helps identify any issues your functions might have because something else changed (like a function you imported). Bioconductor runs other tests and demands that a package satisfies specific criteria to be included in the project, but the idea of routinely checking your <code>R</code> package remains.</p>
+<p>In recent years, more and more developers have turned towards hosting their packages in <a href="https://github.com/">GitHub</a>, specially in the development phase even when working with <a href="http://cran.r-project.org/">CRAN</a> or Bioconductor (through a <a href="http://www.bioconductor.org/developers/how-to/git-svn/">git-svn bridge</a>). While as a developer you can test your package locally, at some point it starts to take a large chunk of your time. That's where open source tools like <a href="https://travis-ci.org/">Travis CI</a> make your life as a developer easier. You can basically set Travis CI to run <em>R CMD check</em> for you every time you push code to GitHub. This protocol explains how to setup Travis CI.</p>
+<h1>Setting up Travis</h1>
+<p>To start, we will assume that you have a GitHub account with at least one repository that contains an <code>R</code> package, lets call it <em>rpack</em>. Your very first step is to sign in to Travis using your GitHub account at <a href="https://travis-ci.org/">travis-ci.org/</a>.</p>
+<h2>Basic setup</h2>
+<h3>Flip the switch</h3>
+<p>Once Travis gets your list of GitHub repositories (force a sync if you don't see <em>rpack</em>), you can turn on Travis for <em>rpack</em> by flipping the switch at <a href="https://travis-ci.org/profile">travis-ci.org/profile</a>. For example, here we turned on the switch for <em>derfinder</em>:</p>
+<center>
+<img src="travis-switch.png" alt="Travis switch" style="width: 500px;"/>
+</center>
+<h3>Setup via devtools</h3>
+<p>If you are using <code>devtools</code> (<a href='http://CRAN.R-project.org/package=devtools'>Wickham and Chang, 2014</a>) for developing your package, you can simply add Travis to <code>rpack</code> by using</p>
+<div class="row">
+<button class="source R toggle btn btn-xs btn-primary">
+<span class="glyphicon glyphicon-chevron-down"></span> R source
+</button>
+<pre style=""><code class="source r">library('devtools')
+use_travis('path to rpack')</code></pre>
+</div>
+<p>This will create the <strong>.travis.yml</strong> and <strong>.Rbuildignore</strong> files in <em>rpack</em>'s main directory.</p>
+<h3>Manual basic setup</h3>
+<h4>Add .travis.yml</h4>
+<p>The next step is to add the file <strong>.travis.yml</strong> to your repository (in the main directory). This file will specify your Travis configuration such as which <code>R</code> packages to install, when you want to be notified by Travis, and what information you want to see.</p>
+<p>The easiest way to setup Travis for R projects is to use <a href="https://github.com/craigcitro/r-travis">r-travis</a> (<a href='https://github.com/craigcitro/r-travis'>craigcitro, 2014</a>). <a href="https://github.com/craigcitro/r-travis/wiki">r-travis instructions</a> show how to add <strong>.travis.yml</strong> with commands, but basically, you want to start by copying the example configuration file shown below into your <strong>.travis.yml</strong> file:</p>
+<pre><code># Sample .travis.yml for R projects.
+#
+# See README.md for instructions, or for more configuration options,
+# see the wiki:
+#   https://github.com/craigcitro/r-travis/wiki
+
+language: c
+
+before_install:
+  - curl -OL http://raw.github.com/craigcitro/r-travis/master/scripts/travis-tool.sh
+  - chmod 755 ./travis-tool.sh
+  - ./travis-tool.sh bootstrap
+install:
+  - ./travis-tool.sh install_deps
+script: ./travis-tool.sh run_tests
+
+after_failure:
+  - ./travis-tool.sh dump_logs
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change</code></pre>
+<p>(Check <a href="https://github.com/craigcitro/r-travis/raw/master/sample.travis.yml">here</a> for the latest version of this example configuration.)</p>
+<h4>Ignore .travis.yml</h4>
+<p>Once you added the <strong>.travis.yml</strong> file you are nearly done with the initial setup. Next, you have to tell <code>R</code> to ignore this specific file. You can do so using the hidden file <strong>.Rbuildignore</strong> which should look like this:</p>
+<pre><code>## Ignore travis config file
+^\.travis\.yml$</code></pre>
+<h3>Add them to git</h3>
+<p>The last step in the basic setup is to simply ask Git to version control the <strong>.travis.yml</strong> and <strong>.Rbuildignore</strong> files. That is, use <em>git add</em> or the add button if you are using a Git/GitHub GUI.</p>
+<pre><code>git add .travis.yml .Rbuildignore
+git commit -m &#39;enable continuous integration via craigcitro/r-travis&#39;
+git push</code></pre>
+<p>Then, push the files to GitHub. This will prompt Travis to check your package using the basic configuration file.</p>
+<h3>Add a status image</h3>
+<p>If you want users to quickly check whether your package is passing the tests run on Travis, simply add a status image. Doing so is quite strait forward and explained in more detail <a href="http://docs.travis-ci.com/user/status-images/">here</a>.</p>
+<h2>Configuring .travis.yml</h2>
+<h3>Installing required packages</h3>
+<p>On a simple scenario, you only have to use the basic setup. In a more realistic scenario, your package might depend on other packages which are available either through CRAN, Bioconductor or GitHub. If that's the case, <a href="https://github.com/craigcitro/r-travis">r-travis</a> has commands which allow you to install these dependencies before installing <em>rpack</em>.</p>
+<p>These are:</p>
+<pre><code>install:
+  ## For a CRAN package
+  - ./travis-tool.sh install_r &lt;package&gt;
+  
+  ## For a Bioconductor package
+  - ./travis-tool.sh install_bioc &lt;package&gt;
+  
+  ## For a GitHub package
+  - ./travis-tool.sh install_github &lt;package&gt;</code></pre>
+<p>These can be useful if you want to install the packages in a specific order. However, you might prefer to use commands that look up <em>rpack</em>'s DESCRIPTION file and automatically determine the list of packages to install.</p>
+<pre><code>install:
+  ## For installing all CRAN dependencies using rpack&#39;s DESCRIPTION
+  - ./travis-tool.sh install_deps
+  
+  ## For installing all Bioconductor dependencies using rpack&#39;s DESCRIPTION
+  - ./travis-tool.sh install_bioc_deps</code></pre>
+<p>Any of these commands have to be specified under the <code>install</code> step. For example</p>
+<pre><code>install:
+  - ./travis-tool.sh install_github hadley/devtools
+  - ./travis-tool.sh install_bioc_deps</code></pre>
+<p>Note that if you are installing Bioconductor packages, there are two versions you could be using. The current <em>release</em> or the current <em>devel</em> version. By default, <a href="https://github.com/craigcitro/r-travis">r-travis</a> uses the current <em>devel</em> version of the packages, but you can turn this off by specifying in <strong>.travis.yml</strong> the <code>BIOC_USE_DEVEL</code> environment variable:</p>
+<pre><code>env:
+  global:
+    - BIOC_USE_DEVEL=&quot;FALSE&quot;</code></pre>
+<p>Further configuration details are explained in the <a href="https://github.com/craigcitro/r-travis/wiki">r-travis wiki</a>. You might also be interested in checking the <a href="https://github.com/csgillespie/travis-examples">travis-examples</a> repository.</p>
+<h3>Configuring <em>R CMD check</em></h3>
+<p>By default <a href="https://github.com/craigcitro/r-travis">r-travis</a> will skip the step of building the vignette and the manual in <em>R CMD build</em> and <em>R CMD check</em>. For checking, it will also test as it was for CRAN. More specifically, the default options are:</p>
+<pre class="sourceCode bash"><code class="sourceCode bash"><span class="kw">R</span> CMD build --no-build-vignettes --no-manual rpack
+<span class="kw">R</span> CMD check --no-build-vignettes --no-manual --as-cran rpack</code></pre>
+<p>In your case, you might want to use a different set of options to build and/or check your package. For example, you might be interested in getting the timing information for the examples for all of your functions. You can do so by setting the environment variable <code>_R_CHECK_TIMINGS_</code> to <code>0</code>.</p>
+<p>That is, using the following in your <strong>.travis.yml</strong></p>
+<pre><code>env:
+  global:
+    - R_CHECK_ARGS=&quot;--no-build-vignettes --no-manual --timings&quot;
+    - _R_CHECK_TIMINGS_=&quot;0&quot;</code></pre>
+<p><code>_R_CHECK_TIMINGS_</code> and other options are described in more detail at the <a href="http://cran.r-project.org/doc/manuals/r-release/R-ints.html#Tools">R Internals</a> manual.</p>
+<h3>Configuring the report</h3>
+<p>Checking for how much time was spent in each of the example pages is great (see above), but by default this information is not reported on Travis. To get the timing information you need to configure Travis to dump the data in the report.</p>
+<p>Similarly, you might want Travis to report the versions of the <code>R</code> packages used in the test. To achieve both goals, add the following to your <strong>.travis.yml</strong> file:</p>
+<pre><code>after_script:
+  - ./travis-tool.sh dump_logs_by_extension &quot;timings&quot;
+  - ./travis-tool.sh dump_sysinfo</code></pre>
+<h3>derfinder use case</h3>
+<p>As a complicated use case, we present the <strong>.travis.yml</strong> file for the <a href="https://github.com/lcolladotor/derfinder">derfinder</a> package.</p>
+<p><code>derfinder</code> depends on two other packages that are available via GitHub: <code>derfinderHelper</code> and <code>derfinderData</code>. Thus, they need to be installed before <code>derfinder</code> can be installed. However, those two packages have some dependencies themselves such as <code>knitr</code> and <code>rmarkdown</code>, so they have to be installed first.</p>
+<p>Furthermore, <code>derfinder</code> runs its tests only then the environment variable <code>R_CHECK_TESTS</code> is set to <code>TRUE</code> (details <a href="https://github.com/lcolladotor/derfinder/blob/master/tests/test-all.R">here</a>). Finally, the results from the Travis tests are reported to <a href="https://slack.com/">Slack</a>: for details check the Slack-Travis integration site.</p>
+<pre><code>language: c
+
+before_install:
+#  - curl -OL http://raw.github.com/craigcitro/r-travis/master/scripts/travis-tool.sh
+  - curl -OL http://raw.github.com/lcolladotor/r-travis/master/scripts/travis-tool.sh
+  - chmod 755 ./travis-tool.sh
+  - ./travis-tool.sh bootstrap
+ 
+install:
+  - ./travis-tool.sh install_bioc S4Vectors
+  - ./travis-tool.sh install_bioc IRanges
+  - ./travis-tool.sh install_r Matrix
+  - ./travis-tool.sh install_r knitr
+  - ./travis-tool.sh install_r rmarkdown
+  - ./travis-tool.sh install_r knitcitations
+  - ./travis-tool.sh install_r knitrBootstrap
+  - ./travis-tool.sh install_github lcolladotor/derfinderHelper
+  - ./travis-tool.sh install_github lcolladotor/derfinderData
+  - ./travis-tool.sh install_bioc_deps
+ 
+script: ./travis-tool.sh run_tests
+
+on_failure:
+  - ./travis-tool.sh dump_logs
+
+after_script:
+  - ./travis-tool.sh dump_logs_by_extension &quot;timings&quot;
+  - ./travis-tool.sh dump_sysinfo
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+  slack:
+    secure: FIA40TI4UkOHvR19rNCfX1la5tiCmyEMjiO/sGyK0cWGt5qQxIOp+PHE3pOk9axYiVacbSCR3oAosQUsOxRew/6FyMsNR3bCPXVUzrIimABvBbjofMBDx3Z7W03O+6YahmHwDrJEWDuJ0k4457QqeqhITcFWX4twieo5fJCjedI=
+
+env:
+  global:
+    - R_BUILD_ARGS=&quot;--no-build-vignettes --no-manual --no-resave-data&quot;
+    - R_CHECK_ARGS=&quot;--no-build-vignettes --no-manual --timings&quot;
+    - R_CHECK_TIME=&quot;TRUE&quot;
+    - R_CHECK_TESTS=&quot;TRUE&quot;
+    - _R_CHECK_TIMINGS_=&quot;0&quot;</code></pre>
+<p>(The latest version can be seen live <a href="https://github.com/lcolladotor/derfinder/blob/master/.travis.yml">here</a>)</p>
+<h3>Learn more</h3>
+<p>If you already browsed the <a href="https://github.com/craigcitro/r-travis/wiki">r-travis wiki</a> the next best place is to actually look at <a href="https://github.com/craigcitro/r-travis/blob/master/scripts/travis-tool.sh">travis-tool.sh</a>. This is the main script that runs r-travis.</p>
+<h1>References</h1>
+<p>We first heard about Travis CI integration with R from <a href="http://yihui.name/en/about/">Yihui Xie</a> on his blog post <a href="http://yihui.name/en/2013/04/travis-ci-for-r/">Travis CI for R?</a> and it's follow up post <a href="http://yihui.name/en/2013/04/travis-ci-general-purpose/">Travis CI for R? (not yet)</a>. However, it only became easy to install thanks to the <a href="https://github.com/craigcitro/r-travis">r-travis</a> project and with <span class="citation">[@siddharthab]</span>(https://github.com/siddharthab)'s contributions to support Bioconductor packages. Plus a helpful reminder to take a look at Travis CI:</p>
+<blockquote class="twitter-tweet" lang="en">
+<p>
+Are you building packages for <a href="https://twitter.com/hashtag/rstats?src=hash">#rstats</a>, using <a href="https://twitter.com/github"><span class="citation">@github</span></a>, and not using <a href="https://twitter.com/travisci"><span class="citation">@travisci</span></a>? Stop and look at devtools::add_travis now.
+</p>
+— John Muschelli (<span class="citation">@StrictlyStat</span>) <a href="https://twitter.com/StrictlyStat/status/510134625705160704">September 11, 2014</a>
+</blockquote>
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+<p>Citations made with <code>knitcitations</code> (<a href='https://github.com/cboettig/knitcitations'>Boettiger, 2014</a>).</p>
+<div class="row">
+<p>
+<a id='bib-knitcitations'></a><a href="#cite-knitcitations">[1]</a><cite> C. Boettiger. <EM>knitcitations: Citations for knitr markdown files</EM>. R package version 1.0.2. 2014. URL: <a href="https://github.com/cboettig/knitcitations">https://github.com/cboettig/knitcitations</a>.</cite>
+</p>
+<p>
+<a id='bib-greycite18061'></a><a href="#cite-greycite18061">[2]</a><cite> craigcitro. <EM>craigcitro/r-travis</EM>. <a href="https://github.com/craigcitro/r-travis">https://github.com/craigcitro/r-travis</a>. 2014. URL: <a href="https://github.com/craigcitro/r-travis">https://github.com/craigcitro/r-travis</a>.</cite>
+</p>
+<p>
+<a id='bib-bioc'></a><a href="#cite-bioc">[3]</a><cite> R. C. Gentleman, V. J. Carey, D. M. Bates and others. “Bioconductor: Open software development for computational biology and bioinformatics”. In: <EM>Genome Biology</EM> 5 (2004), p. R80. URL: <a href="http://genomebiology.com/2004/5/10/R80">http://genomebiology.com/2004/5/10/R80</a>.</cite>
+</p>
+<p>
+<a id='bib-greycite18059'></a><a href="#cite-greycite18059">[4]</a><cite> jtleek. <EM>jtleek/rpackages</EM>. <a href="https://github.com/jtleek/rpackages">https://github.com/jtleek/rpackages</a>. 2014. URL: <a href="https://github.com/jtleek/rpackages">https://github.com/jtleek/rpackages</a>.</cite>
+</p>
+<p>
+<a id='bib-R'></a><a href="#cite-R">[5]</a><cite> R Core Team. <EM>R: A Language and Environment for Statistical Computing</EM>. R Foundation for Statistical Computing. Vienna, Austria, 2014. URL: <a href="http://www.R-project.org/">http://www.R-project.org/</a>.</cite>
+</p>
+<p>
+<a id='bib-devtools'></a><a href="#cite-devtools">[6]</a><cite> H. Wickham and W. Chang. <EM>devtools: Tools to make developing R code easier</EM>. R package version 1.6. 2014. URL: <a href="http://CRAN.R-project.org/package=devtools">http://CRAN.R-project.org/package=devtools</a>.</cite>
+</p>
+</div>
+<p>Date this protocol was last rendered:</p>
+<div class="row">
+<button class="output R toggle btn btn-xs btn-success">
+<span class="glyphicon glyphicon-chevron-down"></span> R output
+</button>
+<pre style=""><code class="output r">## [1] "2014-10-01 17:10:32 EDT"
+</code></pre>
+</div>
 </div>
 </div>
 <div class="navbar navbar-fixed-bottom navbar-inverse">
@@ -885,8 +1098,35 @@
 <p class="navbar-text">
 Toggle
 </p>
-</li></li>
+</li>
+<li class="dropup">
+<a href="#" class="dropdown-toggle" data-toggle="dropdown">Code <b class="caret"></b></a>
+<ul class="dropdown-menu">
+<li class="dropdown-header">
+Languages
+</li>
+<li class="active">
+<a href="#" class="toggle-global source R" type="source.R">R</a>
+</li>
+<li>
+<a href="#" type="all-source" class="toggle-global">All</a>
+</li>
 </ul>
+</li>
+<li class="dropup">
+<a href="#" class="dropdown-toggle" data-toggle="dropdown">Output <b class="caret"></b></a>
+<ul class="dropdown-menu">
+<li class="dropdown-header">
+Type
+</li>
+<li class="active">
+<a href="#" class="toggle-global output" type="output">output</a>
+</li>
+<li>
+<a href="#" type="all-output" class="toggle-global">All</a>
+</li>
+</ul>
+</li>
 <li class="active">
 <a href="#" type="figure" class="toggle-global">Figures</a>
 </li>

@@ -1,7 +1,17 @@
+---
+output:
+  knitrBootstrap::bootstrap_document:
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
+  html_document:
+    toc: true
+    theme: united
+---
+
 protocols
 =========
 
 Here you can find a set of lab analysis protocols.
 
 * [Analyzing RNA-seq data with the "Tuxedo" tools](tophat_cufflinks/)
-
+* [Routinely testing your R package with Travis](travis_bioc_devel/)
