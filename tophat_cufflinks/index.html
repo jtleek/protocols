@@ -1,0 +1,1289 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- jQuery -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+  
+  <!-- bootstrap -->
+  <!--<link href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet"  id="style">-->
+  <script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  
+  <!-- highlight.js -->
+  <!--<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/default.min.css" rel="stylesheet" id="code-style">-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/highlight.min.js"></script>
+  <script>
+  hljs.LANGUAGES.r=function(a){var b="([a-zA-Z]|\\.[a-zA-Z.])[a-zA-Z0-9._]*";return{c:[a.HCM,{b:b,l:b,k:{keyword:"function if in break next repeat else for return switch while try tryCatch|10 stop warning require library attach detach source setMethod setGeneric setGroupGeneric setClass ...|10",literal:"NULL NA TRUE FALSE T F Inf NaN NA_integer_|10 NA_real_|10 NA_character_|10 NA_complex_|10"},r:0},{cN:"number",b:"0[xX][0-9a-fA-F]+[Li]?\\b",r:0},{cN:"number",b:"\\d+(?:[eE][+\\-]?\\d*)?L\\b",r:0},{cN:"number",b:"\\d+\\.(?!\\d)(?:i\\b)?",r:0},{cN:"number",b:"\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",r:0},{b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[a.BE],r:0},{cN:"string",b:"'",e:"'",c:[a.BE],r:0}]}}(hljs); </script>
+  <!--<script type="text/javascript", src="https://yandex.st/highlightjs/7.3/languages/r.min.js"></script>-->
+  
+  <!-- Manific Popup -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/0.8.9/jquery.magnific-popup.min.js"></script>
+  
+  <script type="text/javascript"
+    src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+  </script>
+  <script defer="defer">
+  // Function to generate the dynamic table of contents
+  jQuery.fn.generate_TOC = function () {
+    var base = $(this[0]);
+  
+    var selectors = ['h1', 'h2', 'h3', 'h4'];
+  
+    var last_ptr = [{}, {}, {}, {}];
+  
+    var anchors = {};
+  
+    generate_anchor = function (text) {
+      var test = text.replace(/\W/g, '_');
+  
+      while(test in anchors){
+        //if no suffix, add one
+        if(test.match(/_\d+$/) === null){
+          test = test + "_2";
+        }
+        //else generate unique id for duplicates by adding one to the suffix
+        else {
+          test = test.replace(/_(\d+)$/, function(match, number){ var num=+number+1; return("_" + num) });
+        }
+      }
+      anchors[test]=1;
+      return(test);
+    }
+  
+    $(selectors.join(',')).filter(function(index) { return $(this).parent().attr("id") != 'header'; }).each(function () {
+  
+      var heading = $(this);
+      var idx = selectors.indexOf(heading.prop('tagName').toLowerCase());
+      var itr = 0;
+  
+      while (itr <= idx) {
+        if (jQuery.isEmptyObject(last_ptr[itr])) {
+          last_ptr[itr] = $('<ul>').addClass('nav');
+          if (itr === 0) {
+            base.append(last_ptr[itr])
+          } else {
+            if(last_ptr[itr-1].children('li').length === 0){
+              last_ptr[itr-1].append(last_ptr[itr]);
+            }
+            else {
+              last_ptr[itr - 1].children('li').last().append(last_ptr[itr]);
+            }
+          }
+        }
+        itr++;
+      }
+      var anchor = generate_anchor(heading.text());
+      heading.attr('id', anchor);
+      var a = $('<a>')
+      .text(heading.text())
+      .attr('href', '#' + anchor);
+  
+    var li = $('<li>')
+      .append(a);
+  
+    last_ptr[idx].append(li);
+    for (i = idx + 1; i < last_ptr.length; i++) {
+      last_ptr[i] = {};
+    }
+    });
+  }
+  /* run scripts when document is ready */
+  $(function() {
+    "use strict";
+  
+    var $window = $(window);
+    var $body = $(document.body);
+  
+    /* size of thumbnails */
+  
+    var hidden_types = ['source']
+    var output_types = ['output', 'message', 'warning', 'error']
+  
+    /* style tables */
+    $('table').addClass('table table-striped table-bordered table-hover table-condensed');
+  
+    $('pre code').each(function(i, e) {
+      hljs.highlightBlock(e);
+    });
+  
+    /* Magnific Popup */
+    $(".thumbnail").each(function(){
+      $(this).magnificPopup({
+        disableOn: 768,
+        closeOnContentClick: true,
+  
+        type: 'image',
+        items: {
+          src: $(this).find('img').attr('src'),
+        }
+      });
+    });
+  
+    function toggle_block(obj, show) {
+      var span = obj.find('span');
+      if(show === true){
+        span.removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+        obj.next('pre').slideDown();
+      }
+      else {
+        span.removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+        obj.next('pre').slideUp();
+      }
+    }
+  
+    function toggle_thumbnails(imgs, show){
+      if(show === true){
+        imgs.parents().show()
+        imgs.slideDown();
+      }
+      else {
+        imgs.slideUp(400, function(){ $(this).parent().hide(); });
+      }
+    }
+  
+    function global_toggle(obj){
+      var type = obj.attr('type');
+      var show = !obj.parent('li').hasClass('active');
+      if(show === true){
+        obj.parent('li').addClass('active');
+      }
+      else{
+        obj.parent('li').removeClass('active');
+      }
+      if(type == 'figure'){
+        toggle_thumbnails($('.thumbnail img'), show);
+      }
+      else {
+        $('.toggle.' + type).each(function() { toggle_block($(this), show); });
+      }
+    }
+  
+    /* onclick toggle next code block */
+    $('.toggle').click(function() {
+      var span = $(this).find('span');
+      toggle_block($(this), !span.hasClass('glyphicon-chevron-down'));
+      return false
+    })
+  
+    // global toggles
+    $('.toggle-global').click(function(){
+      var type = $(this).attr('type');
+      if(type === 'all-source'){
+          $('li a.source').each(function() {
+            global_toggle($(this));
+          });
+        }
+      else if(type === 'all-output'){
+        $.each(output_types, function(i, val){
+          console.log(val);
+          global_toggle($('li a.' + val));
+        });
+      }
+      else {
+        console.log($(this));
+        global_toggle($(this));
+      }
+      return false;
+    });
+    /* table of contents */
+    if($(['h1', 'h2', 'h3', 'h4'].join(',')).length > 0){
+      $('body > #wrap > .container > .row').append('<div class="col-md-2"><div id="toc" class="well sidebar sidenav affix hidden-print"/></div>');
+      $('#toc').generate_TOC();
+    }
+  
+    $.each(hidden_types, function(i, type) {
+      $('li[type=' + type + ']').each(function(){ global_toggle($(this)); });
+    });
+  
+    /* remove paragraphs with no content */
+    $('p:empty').remove();
+  
+    $body.scrollspy({
+      target: '.sidebar',
+    });
+  
+    /* theme switch */
+    $('.theme-switch').click(function(){
+      var css = $('link[title=' + $(this).attr('title') + ']');
+      $('#theme[rel=stylesheet]').attr('href', css.attr('href'));
+      $('.theme-switch').closest('li').removeClass('active');
+      $(this).closest('li').addClass('active');
+      return false;
+    });
+    /* code style switch */ //TODO use same function for both of these?
+    $('.highlight-switch').click(function(){
+      var css = $('link[title="' + $(this).attr('title') + '"]');
+      $('#highlight[rel=stylesheet]').attr('href', css.attr('href'));
+      $('.highlight-switch').closest('li').removeClass('active');
+      $(this).closest('li').addClass('active');
+      return false;
+    });
+  
+    //TODO refresh on show/hide
+    $window.on('load', function () {
+      $body.scrollspy('refresh');
+    })
+  
+  });
+  
+  </script>
+  <style>
+  /* Knitr_bootstrap styles */
+  #header {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  #wrap .container-fluid {
+    padding: 0;
+    overflow: hidden;
+  }
+  .toggle{
+    text-transform: capitalize;
+  }
+  
+  .toggle-global{
+    text-transform: capitalize;
+  }
+  
+  /* Sticky footer styles */
+  * {
+    margin:0;
+  }
+  html,
+  body {
+      height: 100%;
+      padding:0 !important;
+      /* The html and body elements cannot have any padding or margin. */
+      /*overflow-x: hidden;*/
+  }
+  
+  /* Wrapper for page content to push down footer */
+  #wrap {
+      min-height: 100%;
+      height: auto !important;
+      height: 100%;
+      /* Negative indent footer by it's height */
+      margin: 0 auto -120px;
+  }
+  
+  /* Set the fixed height of the footer here */
+  #push,
+  #footer {
+      height: 120px;
+  }
+  
+  #footer {
+    text-align: center;
+  }
+  
+  /* Top level subheader elements.  These are the first nested items underneath a header element. */
+  .header li {
+    font-size: 20px;
+  }
+  
+  /* Makes the font smaller for all subheader elements. */
+  .sub-header li {
+      font-size: 12px;
+  }
+  
+  button.thumbnails {
+    margin-left:0px;
+  }
+  
+  /*
+   * Side navigation
+   *
+   * Scrollspy and affixed enhanced navigation to highlight sections and secondary
+   * sections of docs content.
+   */
+  
+  /* By default it's not affixed in mobile views, so undo that */
+  .sidebar.affix {
+    position: static;
+  }
+  
+  /* First level of nav */
+  .sidenav {
+    margin-top: 30px;
+    margin-bottom: 30px;
+    padding-top:    10px;
+    padding-bottom: 10px;
+    border-radius: 5px;
+  }
+  
+  /* All levels of nav */
+  .sidebar .nav > li > a {
+    display: block;
+    padding: 5px 20px;
+  }
+  .sidebar .nav > li > a:hover,
+  .sidebar .nav > li > a:focus {
+    text-decoration: none;
+    border-right: 1px solid;
+  }
+  .sidebar .nav > .active > a,
+  .sidebar .nav > .active:hover > a,
+  .sidebar .nav > .active:focus > a {
+    font-weight: bold;
+    background-color: transparent;
+    border-right: 1px solid;
+  }
+  
+  /* Nav: second level (shown on .active) */
+  .sidebar .nav .nav {
+    display: none; /* Hide by default, but at >768px, show it */
+    margin-bottom: 8px;
+  }
+  .sidebar .nav .nav > li > a {
+    padding-top:    3px;
+    padding-bottom: 3px;
+    padding-left: 30px;
+    font-size: 90%;
+  }
+  
+  .sidebar .nav .nav .nav > li > a {
+    padding-left: 40px;
+  }
+  .sidebar .nav .nav .nav .nav > li > a {
+    padding-left: 50px;
+  }
+  
+  /* Show and affix the side nav when space allows it */
+  @media screen and (min-width: 992px) {
+    .sidebar .nav > .active > ul {
+      display: block;
+    }
+    /* Widen the fixed sidebar */
+    .sidebar.affix,
+    .sidebar.affix-bottom {
+      width: 213px;
+    }
+    .sidebar.affix-top,
+    .sidebar.affix {
+      position: fixed; /* Undo the static from mobile first approach */
+      top: 30px;
+    }
+    .sidebar.affix-bottom {
+      position: absolute; /* Undo the static from mobile first approach */
+    }
+    .sidebar.affix-bottom .sidenav,
+    .sidebar.affix .sidenav {
+      margin-top: 0;
+      margin-bottom: 0;
+    }
+  }
+  @media screen and (min-width: 1200px) {
+    /* Widen the fixed sidebar again */
+    .sidebar.affix-bottom,
+    .sidebar.affix {
+      width: 263px;
+    }
+  }
+  
+  #toc {
+    padding: 10px 0px;
+    margin:0;
+    border:0;
+  }
+  
+  
+  .panel pre {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  button + pre {
+    margin: 0;
+    padding: 0;
+  }
+  pre code {
+    border-radius: 0;
+  }
+  /* Magnific Popup CSS */
+  .mfp-bg {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1042;
+    overflow: hidden;
+    position: fixed;
+    background: #0b0b0b;
+    opacity: 0.8;
+    filter: alpha(opacity=80); }
+  
+  .mfp-wrap {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1043;
+    position: fixed;
+    outline: none !important;
+    -webkit-backface-visibility: hidden; }
+  
+  .mfp-container {
+    text-align: center;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    padding: 0 8px;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box; }
+  
+  .mfp-container:before {
+    content: '';
+    display: inline-block;
+    height: 100%;
+    vertical-align: middle; }
+  
+  .mfp-align-top .mfp-container:before {
+    display: none; }
+  
+  .mfp-content {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    margin: 0 auto;
+    text-align: left;
+    z-index: 1045; }
+  
+  .mfp-inline-holder .mfp-content,
+  .mfp-ajax-holder .mfp-content {
+    width: 100%;
+    cursor: auto; }
+  
+  .mfp-ajax-cur {
+    cursor: progress; }
+  
+  .mfp-zoom-out-cur,
+  .mfp-zoom-out-cur .mfp-image-holder .mfp-close {
+    cursor: -moz-zoom-out;
+    cursor: -webkit-zoom-out;
+    cursor: zoom-out; }
+  
+  .mfp-zoom {
+    cursor: pointer;
+    cursor: -webkit-zoom-in;
+    cursor: -moz-zoom-in;
+    cursor: zoom-in; }
+  
+  .mfp-auto-cursor .mfp-content {
+    cursor: auto; }
+  
+  .mfp-close,
+  .mfp-arrow,
+  .mfp-preloader,
+  .mfp-counter {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none; }
+  
+  .mfp-loading.mfp-figure {
+    display: none; }
+  
+  .mfp-hide {
+    display: none !important; }
+  
+  .mfp-preloader {
+    color: #cccccc;
+    position: absolute;
+    top: 50%;
+    width: auto;
+    text-align: center;
+    margin-top: -0.8em;
+    left: 8px;
+    right: 8px;
+    z-index: 1044; }
+  
+  .mfp-preloader a {
+    color: #cccccc; }
+  
+  .mfp-preloader a:hover {
+    color: white; }
+  
+  .mfp-s-ready .mfp-preloader {
+    display: none; }
+  
+  .mfp-s-error .mfp-content {
+    display: none; }
+  
+  button.mfp-close,
+  button.mfp-arrow {
+    overflow: visible;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    -webkit-appearance: none;
+    display: block;
+    padding: 0;
+    z-index: 1046;
+    -webkit-box-shadow: none;
+    box-shadow: none; }
+  
+  button::-moz-focus-inner {
+    padding: 0;
+    border: 0; }
+  
+  .mfp-close {
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    text-decoration: none;
+    text-align: center;
+    opacity: 0.65;
+    padding: 0 0 18px 10px;
+    color: white;
+    font-style: normal;
+    font-size: 28px;
+    font-family: Arial, Baskerville, monospace; }
+    .mfp-close:hover, .mfp-close:focus {
+      opacity: 1; }
+    .mfp-close:active {
+      top: 1px; }
+  
+  .mfp-close-btn-in .mfp-close {
+    color: #333333; }
+  
+  .mfp-image-holder .mfp-close,
+  .mfp-iframe-holder .mfp-close {
+    color: white;
+    right: -6px;
+    text-align: right;
+    padding-right: 6px;
+    width: 100%; }
+  
+  .mfp-counter {
+    position: absolute;
+    top: 0;
+    right: 0;
+    color: #cccccc;
+    font-size: 12px;
+    line-height: 18px; }
+  
+  .mfp-arrow {
+    position: absolute;
+    opacity: 0.65;
+    margin: 0;
+    top: 50%;
+    margin-top: -55px;
+    padding: 0;
+    width: 90px;
+    height: 110px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0); }
+  
+  .mfp-arrow:active {
+    margin-top: -54px; }
+  
+  .mfp-arrow:hover,
+  .mfp-arrow:focus {
+    opacity: 1; }
+  
+  .mfp-arrow:before, .mfp-arrow:after,
+  .mfp-arrow .mfp-b,
+  .mfp-arrow .mfp-a {
+    content: '';
+    display: block;
+    width: 0;
+    height: 0;
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin-top: 35px;
+    margin-left: 35px;
+    border: medium inset transparent; }
+  .mfp-arrow:after,
+  .mfp-arrow .mfp-a {
+    border-top-width: 13px;
+    border-bottom-width: 13px;
+    top: 8px; }
+  .mfp-arrow:before,
+  .mfp-arrow .mfp-b {
+    border-top-width: 21px;
+    border-bottom-width: 21px; }
+  
+  .mfp-arrow-left {
+    left: 0; }
+    .mfp-arrow-left:after,
+    .mfp-arrow-left .mfp-a {
+      border-right: 17px solid white;
+      margin-left: 31px; }
+    .mfp-arrow-left:before,
+    .mfp-arrow-left .mfp-b {
+      margin-left: 25px;
+      border-right: 27px solid #3f3f3f; }
+  
+  .mfp-arrow-right {
+    right: 0; }
+    .mfp-arrow-right:after,
+    .mfp-arrow-right .mfp-a {
+      border-left: 17px solid white;
+      margin-left: 39px; }
+    .mfp-arrow-right:before,
+    .mfp-arrow-right .mfp-b {
+      border-left: 27px solid #3f3f3f; }
+  
+  .mfp-iframe-holder {
+    padding-top: 40px;
+    padding-bottom: 40px; }
+  
+  .mfp-iframe-holder .mfp-content {
+    line-height: 0;
+    width: 100%;
+    max-width: 900px; }
+  
+  .mfp-iframe-scaler {
+    width: 100%;
+    height: 0;
+    overflow: hidden;
+    padding-top: 56.25%; }
+  
+  .mfp-iframe-scaler iframe {
+    position: absolute;
+    display: block;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+    background: black; }
+  
+  .mfp-iframe-holder .mfp-close {
+    top: -40px; }
+  
+  /* Main image in popup */
+  img.mfp-img {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    display: block;
+    line-height: 0;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    padding: 40px 0 40px;
+    margin: 0 auto; }
+  
+  /* The shadow behind the image */
+  .mfp-figure:after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 40px;
+    bottom: 40px;
+    display: block;
+    right: 0;
+    width: auto;
+    height: auto;
+    z-index: -1;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+    background: #444444; }
+  
+  .mfp-figure {
+    line-height: 0; }
+  
+  .mfp-bottom-bar {
+    margin-top: -36px;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    cursor: auto; }
+  
+  .mfp-title {
+    text-align: left;
+    line-height: 18px;
+    color: #f3f3f3;
+    word-wrap: break-word;
+    padding-right: 36px; }
+  
+  .mfp-figure small {
+    color: #bdbdbd;
+    display: block;
+    font-size: 12px;
+    line-height: 14px; }
+  
+  .mfp-image-holder .mfp-content {
+    max-width: 100%; }
+  
+  .mfp-gallery .mfp-image-holder .mfp-figure {
+    cursor: pointer; }
+  
+  @media screen and (max-width: 800px) and (orientation: landscape), screen and (max-height: 300px) {
+    /**
+     * Remove all paddings around the image on small screen
+     */
+    .mfp-img-mobile .mfp-image-holder {
+      padding-left: 0;
+      padding-right: 0; }
+  
+    .mfp-img-mobile img.mfp-img {
+      padding: 0; }
+  
+    /* The shadow behind the image */
+    .mfp-img-mobile .mfp-figure:after {
+      top: 0;
+      bottom: 0; }
+  
+    .mfp-img-mobile .mfp-bottom-bar {
+      background: rgba(0, 0, 0, 0.6);
+      bottom: 0;
+      margin: 0;
+      top: auto;
+      padding: 3px 5px;
+      position: fixed;
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box; }
+  
+    .mfp-img-mobile .mfp-bottom-bar:empty {
+      padding: 0; }
+  
+    .mfp-img-mobile .mfp-counter {
+      right: 5px;
+      top: 3px; }
+  
+    .mfp-img-mobile .mfp-close {
+      top: 0;
+      right: 0;
+      width: 35px;
+      height: 35px;
+      line-height: 35px;
+      background: rgba(0, 0, 0, 0.6);
+      position: fixed;
+      text-align: center;
+      padding: 0; }
+  
+    .mfp-img-mobile .mfp-figure small {
+      display: inline;
+      margin-left: 5px; } }
+  @media all and (max-width: 900px) {
+    .mfp-arrow {
+      -webkit-transform: scale(0.75);
+      transform: scale(0.75); }
+  
+    .mfp-arrow-left {
+      -webkit-transform-origin: 0;
+      transform-origin: 0; }
+  
+    .mfp-arrow-right {
+      -webkit-transform-origin: 100%;
+      transform-origin: 100%; }
+  
+    .mfp-container {
+      padding-left: 6px;
+      padding-right: 6px; } }
+  .mfp-ie7 .mfp-img {
+    padding: 0; }
+  .mfp-ie7 .mfp-bottom-bar {
+    width: 600px;
+    left: 50%;
+    margin-left: -300px;
+    margin-top: 5px;
+    padding-bottom: 5px; }
+  .mfp-ie7 .mfp-container {
+    padding: 0; }
+  .mfp-ie7 .mfp-content {
+    padding-top: 44px; }
+  .mfp-ie7 .mfp-close {
+    top: 0;
+    right: 0;
+    padding-top: 0; }
+  
+  //Magnific overrides
+  .mfp-image img{
+    background: white;
+  }
+  .mfp-figure:after {
+    background: white;
+  }
+  
+  /*
+   * Off Canvas navbar toggle right
+   * --------------------------------------------------
+   */
+  
+  @media screen and (max-width: 768px) {
+    .row-offcanvas .collapsing {
+    -webkit-transition: none 0;
+      -moz-transition: none 0;
+      transition: none 0;
+    }
+   .row-offcanvas .navbar {
+    position: absolute;
+    z-index: 2;
+      right:0;
+      height:100%;
+      width:55px;
+      border:0;
+      background-color:transparent;
+    }
+    .row-offcanvas .navbar-toggle {
+      margin-right: 5px;
+      margin-left: 5px;
+    }
+    .row-offcanvas {
+      position: relative;
+    }
+    .row-offcanvas-right.active .navbar {
+    position: absolute;
+    z-index: 2;
+      right: -28.4%;
+      width:40%;
+      background-color:#eee;
+      border:0 solid #ddd;
+      border-left-width:1px;
+    }
+    .row-offcanvas-right.active {
+      left: -30%;
+    }
+    .row-offcanvas-right.active .navbar-collapse {
+      position: relative;
+      width: 100%;
+    }
+    .row-offcanvas .content {
+    /*width:calc(100% - 60px);*/
+    }
+  }
+  </style>
+</head>
+<body>
+<div id="wrap">
+<div class="container">
+<div class="row row-offcanvas row-offcanvas-right">
+<div class="contents col-xs-12 col-md-10">
+<h1>Analyzing RNA-seq data with the &quot;Tuxedo&quot; tools</h1>
+<p><em>Introduction/tl;dr: I wrote this post as a reference for folks that are getting started with RNA-seq data analysis. It begins with an informal, big-picture overview of RNA-seq data analysis, and the rest of the post outlines one standard RNA-seq workflow (read alignment + transcriptome assembly, no differential expression analysis). Much of this protocol is specific to the JHSPH biostat computing setup.</em></p>
+<h3>preliminaries: what's RNA-seq?</h3>
+<p><a href="http://en.wikipedia.org/wiki/RNA-Seq">RNA-seq</a> is a high-throughput technology used to measure gene expression in cell populations. For a super bare-bones picture of what gene expression is, please enjoy this ASCII art I made to illustrate the process:</p>
+<pre><code>[DNA]            ACGTAGGT{CGTATTT}AGCGT{AGCGCCCGA}TTACA
+                                    |                   
+                              transcription
+                                    |
+                                    V
+[pre-RNA]                {GCAUAAA}UCGCA{UCGCGGGCU}
+                                    |
+                                 splicing
+                                    |
+                                    V
+[RNA]                      {GCAUAAA}{UCGCGGGCU}                            </code></pre>
+<p>As shown in the awesome ASCII illustration, RNA molecules are basically strings of characters (G, C, U, or A; referred to as &quot;nucleotides&quot; or &quot;bases&quot;). RNA molecules are transcribed from DNA, and mature RNA consists only of the &quot;expressed&quot; parts of a gene (denoted in the illustration between curly brackets). Sequencing machines read off the base sequences of the mature RNA molecules in the cells in question. Base calling is kind of a hard problem, and current technologies can only read off about 100 nucleotides in a row, even though actual human RNA transcripts can be hundreds or thousands of bases long. These ~100-base reads are then written out into a text file in <a href="http://en.wikipedia.org/wiki/FASTQ_format">FASTQ format</a>. These are what I consider &quot;raw&quot; RNA-seq data.</p>
+<h3>preliminaries II: why is RNA-seq important?</h3>
+<p>We can do lots of fun and scientifically-interesting things with RNA-seq data. I am mostly in the business of developing statistical methods to determine whether specific RNA transcripts are expressed at different levels in different cell populations (differential expression analysis). You can measure a transcript's expression level, or abundance in the cell, by figuring out how many RNA-seq reads came from that particular transcript. You can also do a lot of other cool stuff with RNA-seq, like discover new genes/transcripts, compare genes' expression levels to each other, or study the expression profile of a gene or transcript over time (e.g., which genes are expressed while a cell is developing from a stem cell into a heart cell?). Since there is so much we can learn from this type of data, it's being used to research complex diseases (e.g. cancer, psychiatric disease), evolutionary biology, organism development, and lots of other fields. If you'd like a more formal overview of RNA-seq, I highly recommend <a href="http://genomebiology.com/2010/11/12/220">this review paper</a> (open access!). A more formal writeup of the analysis process is available in this <a href="http://europepmc.org/articles/PMC3334321/">protocols paper</a> (also open access).</p>
+<h3>preliminaries III: what do I need to get started?</h3>
+<ul>
+<li>A Linux cluster with the Sun Grid Engine scheduling system. (Definitely not required for RNA-seq analysis, but the workflow described here assumes it).</li>
+<li><a href="http://ccb.jhu.edu/software/tophat/index.shtml">TopHat</a></li>
+<li><a href="http://cufflinks.cbcb.umd.edu/">Cufflinks</a></li>
+<li>A reference/index/set of annotations for the organism you're analyzing. I recommend downloading a reference from <a href="http://ccb.jhu.edu/software/tophat/igenomes.shtml">this page</a>. Any of the choices for your organism are fine.</li>
+<li>A good text editor. I use <a href="http://www.sublimetext.com/">Sublime</a> on my laptop, and I transfer files to the cluster using sftp (sometimes with the <a href="http://cyberduck.io/">Cyberduck</a> GUI). To edit text files directly on the cluster, I use emacs and I open files for editing with <code>emacs -nw myfile.sh</code>. When I'm done editing the file, I close it with ctrl-x ctrl-c, then hit &quot;y&quot; to save.</li>
+<li>Data. This pipeline will work if you're starting with either FASTQ files (raw reads) or .bam files (read alignments).</li>
+</ul>
+<h3>step 0: setting up the project directory</h3>
+<p>I usually set up the directory for an RNA-seq analysis like this, if I'm starting with raw reads:</p>
+<pre><code>ProjectName/
+├── data/
+    ├── sample1_1.fastq
+    ├── sample1_2.fastq
+    ├── sample2_1.fastq
+    ├── sample2_1.fastq
+    ├── ...
+    ├── sampleN_1.fastq
+    └── sampleN_2.fastq
+├── alignments/
+    └── scripts/
+├── assemblies/
+    ├── scripts/
+    └── merged/
+├── DE_analysis/
+├── reference/
+    └── Homo_Sapiens/</code></pre>
+<p>(for transcript assembly with Cufflinks, usually we use paired-end reads, which is why there are 2 fastq files for each sample).</p>
+<p>My setup will look like this, if I'm starting from read alignments (bam files):</p>
+<pre><code>ProjectName/
+├── alignments/
+    ├── sample1.bam
+    ├── sample2.bam
+    ├── ...
+    └── sampleN.bam
+├── assemblies/
+    ├── scripts/
+    └── merged/
+├── DE_analysis/
+├── reference/
+    └── Homo_Sapiens/</code></pre>
+<p>You don't need new reference files for every experiment you analyze, but for this example, I'm just going to assume the reference is located in your project directory, so that the paths in the scripts make sense.</p>
+<h3>step 1: read alignment</h3>
+<p><strong>input</strong>: RNA-seq reads, in FASTQ or FASTA format (extensions <code>.fastq</code>, <code>.fq</code>, <code>.fasta</code>, or <code>.fa</code>). They can be zipped/compressed.<br /><strong>output</strong>: read alignments, in <code>.bam</code> format. (BAM is the compressed form of SAM, i.e. &quot;sequence alignment/map&quot; format, <a href="http://samtools.sourceforge.net/SAMv1.pdf">described here</a>).<br /><strong>task</strong>: determine where on the <em>genome</em> (DNA) each RNA-seq read came from<br /><strong>run how many times:</strong> once for each sample in your experiment<br /><strong>move to step 2 if:</strong> you already have read alignments in .bam format</p>
+<p>TopHat has to be run separately on every sample. For datasets with several samples, I like to run the TopHat jobs in parallel. I also like to use multiple threads/cores to run each job, to improve speed; this is defined by the <code>-p</code> argument to TopHat. So for each sample, I submit a bash script that looks like this (defining some variables before the actual TopHat command so the command isn't totally unreadable):</p>
+<pre class="shell"><code>#!/bin/sh
+
+SAMPLE_ID=1
+TOPHAT_BINARY=/path/to/tophat/executable/tophat
+GENE_REFERENCE=/ProjectName/reference/Homo_sapiens/UCSC/hg19/Annotation/Genes/genes.gtf
+BOWTIE_INDEX=/ProjectName/reference/Homo_sapiens/UCSC/hg19/Sequence/Bowtie2Index/genome
+P=4 #use 4 threads
+
+$TOPHAT_BINARY -G $GENE_REFERENCE -p $P -o /ProjectName/alignments/sample${SAMPLE_ID} $BOWTIE_INDEX /ProjectName/data/sample${SAMPLE_ID}_1.fastq /ProjectName/data/sample${SAMPLE_ID}_2.fastq</code></pre>
+<p>Note that there are <a href="http://ccb.jhu.edu/software/tophat/manual.shtml">a LOT of TopHat parameters you can set</a>. I generally use the defaults for most of them. Above, I specified <code>-G</code> and a path to a <code>genes.gtf</code> file, which means that I first want to align reads to the <em>transcriptome</em> (i.e., known RNA), and <em>then</em> map any remaining unmapped reads back to the <em>genome</em>. (One case where a read would map to the genome but not the transcriptome is if it came from a <a href="http://en.wikipedia.org/wiki/Alternative_splicing">retained intron</a>, so the sequence wouldn't appear in the annotated transcriptome). I also specified <code>-p</code> to tell TopHat to use multiple threads/cores (this is very helpful in terms of speed). The one parameter I didn't set above, but that I do want to mention, is the <code>-r</code> parameter, the mate inner distance -- if you have paired-end reads, you should set the mate inner distance to be the fragment length minus twice the read length (if you don't know what this means, talk to the person who gave you the data). The default is 50.</p>
+<p>I don't really want to make a script by hand for every single sample, nor do I want to manually submit them all with <code>qsub</code>. There could be hundreds of samples in my experiment. To get around this, I create a master shell script, <code>tophat.sh</code>, in the main project directory. The master script creates the sample-specific scripts automatically, using the syntax <code>cat &gt; filename.sh &gt;&gt; EOF</code>, and submits them with <code>qsub</code>. For the experiment outlined here, my <code>tophat.sh</code> file would look like this:</p>
+<pre class="shell"><code>#!/bin/sh
+
+TOPHAT_BINARY=/path/to/tophat/executable/tophat
+GENE_REFERENCE=/ProjectName/reference/Homo_sapiens/UCSC/hg19/Annotation/Genes/genes.gtf
+BOWTIE_INDEX=/ProjectName/reference/Homo_sapiens/UCSC/hg19/Sequence/Bowtie2Index/genome
+P=4 
+
+for SAMPLE_ID in {1..N}
+do
+cat &gt; /ProjectName/alignments/scripts/tophat_${SAMPLE_ID}.sh &lt;&lt;EOF
+$TOPHAT_BINARY -G $GENE_REFERENCE -p $P -o /ProjectName/alignments/sample${SAMPLE_ID} $BOWTIE_INDEX /ProjectName/data/sample${SAMPLE_ID}_1.fastq /ProjectName/data/sample${SAMPLE_ID}_2.fastq
+mv /ProjectName/alignments/sample${SAMPLE_ID}/accepted_hits.bam /ProjectName/alignments/sample${SAMPLE_ID}.bam
+EOF
+
+qsub -l mf=20G,h_vmem=5G -pe local $P -m e -M myemail@email.com /ProjectName/alignments/scripts/tophat_${SAMPLE_ID}.sh
+
+done</code></pre>
+<p>Then, from the <code>ProjectName</code> directory, just execute <code>tophat.sh</code>:</p>
+<pre><code>[afrazee@enigma2 ProjectName]$ sh tophat.sh
+Your job tophat_sample1.sh has been submitted
+Your job tophat_sample2.sh has been submitted
+...
+Your job tophat_sampleN.sh has been submitted </code></pre>
+<p>You'll get an email at <code>myemail@email.com</code> when each job finishes. They'll take a few hours each.</p>
+<p>If you look in the <code>scripts</code> subdirectory of the <code>alignments</code> folder, you can see the sample-specific scripts that the master script created. When your jobs are finished, your project directory will look like this (note that the final alignments end up in the <code>alignments</code> directory due to the <code>mv</code> command at the end of each sample-specific script):</p>
+<pre><code>ProjectName/
+├── tophat.sh
+├── data/
+    ├── sample1_1.fastq
+    ├── sample1_2.fastq
+    ├── sample2_1.fastq
+    ├── sample2_1.fastq
+    ├── ...
+    ├── sampleN_1.fastq
+    └── sampleN_2.fastq
+├── alignments/
+    ├── sample1.bam
+    ├── sample2.bam
+    ├── ...
+    ├── sampleN.bam
+    ├── sample1/
+        └── [...other TopHat output...]
+    ├── sample2/
+        └── [...other TopHat output...]
+    ├── ...
+        └── [...other TopHat output...]
+    ├── sampleN/
+        └── [...other TopHat output...]
+    └── scripts/
+        ├── tophat_sample1.sh
+        ├── tophat_sample1.sh
+        ├── ...
+        └── tophat_sampleN.sh
+├── assemblies/
+    ├── scripts/
+    └── merged/
+├── DE_analysis/
+├── reference/
+    └── Homo_Sapiens/</code></pre>
+<h3>step 2: transcript assembly</h3>
+<p><strong>input</strong>: read alignments, in <code>.bam</code> format<br /><strong>output</strong>: a transcript assembly, in <a href="http://www.ensembl.org/info/website/upload/gff.html">gtf format</a>. (A GTF file is a plain-text file that specifies locations, strands, and structures of genomic features. Usually there is one row per exon/coding sequence, and the rightmost column specifies which exons belong to which transcripts/genes).<br /><strong>task</strong>: reconstruct the set of RNA transcripts generated by each gene in each sample, based on the RNA-seq reads<br /><strong>run how many times:</strong> once for each sample in your experiment</p>
+<p>After you align RNA-seq reads back to the genome, you are ready to reconstruct the transcripts present in your experiment based on those alignments using Cufflinks. We need to assemble the transcriptomes for each sample separately. The assemblies will be merged (in step 3) to create an overall transcriptome assembly for the experiment. Here, I'm assuming you want to do a totally <em>de novo</em> assembly (i.e., reconstruct the transcripts without using annotation to help). For instructions on doing a guided assembly, and to see the myriad of other options available, <a href="http://cufflinks.cbcb.umd.edu/manual.html">check out the manual</a>.</p>
+<p>I use the same type of script structure for Cufflinks as I do for TopHat (see previous step): write a master script, <code>cufflinks.sh</code>, in the main project directory, which will create and submits sample-specific scripts.</p>
+<p>My master <code>cufflinks.sh</code> script would look like this:</p>
+<pre class="shell"><code>#!/bin/sh
+
+CUFFLINKS_BINARY=/path/to/cufflinks/binary/cufflinks
+P=4 #use 4 threads/cores
+
+for SAMPLE_ID in {1..N}
+do
+cat &gt; /ProjectName/assemblies/scripts/cufflinks_${SAMPLE_ID}.sh &lt;&lt;EOF 
+#!/bin/sh
+
+$CUFFLINKS_BINARY -q -p $P -o /ProjectName/assemblies/sample${SAMPLE_ID} /ProjectName/alignments/sample${SAMPLE_ID}.bam
+
+mv /ProjectName/assemblies/sample${SAMPLE_ID}/transcripts.gtf /ProjectName/assemblies/sample${SAMPLE_ID}_transcripts.gtf
+EOF
+qsub -l mf=20G,h_vmem=5G -m e -M myemail@email.com -pe local $P cufflinks_${SAMPLE_ID}.sh
+done</code></pre>
+<p>The <code>-q</code> option specifies that you want &quot;quiet&quot; output (the non-quiet output is very, very dense), and the <code>-p</code> option again specifies how many cores/threads to use. In my experience, multithreading gives you more of a speedup when you use it with TopHat than with Cufflinks (alignment is more easily parallelized), but it's still worth running Cufflinks on more than 1 core if you can.</p>
+<p>And then from the <code>ProjectName</code> directory, I run:</p>
+<pre><code>[afrazee@enigma2 ProjectName]$ sh cufflinks.sh
+Your job cufflinks_sample1.sh has been submitted
+Your job cufflinks_sample2.sh has been submitted
+...
+Your job cufflinks_sampleN.sh has been submitted </code></pre>
+<p>Again, you'll get an email notification when each sample's assembly is finished. When all the jobs are done, your project directory will now look something like this:</p>
+<pre><code>ProjectName/
+├── tophat.sh
+├── cufflinks.sh
+├── data/
+    ├── [...all data...]
+├── alignments/
+    ├── sample1.bam
+    ├── sample2.bam
+    ├── ...
+    ├── sampleN.bam
+    ├── [...all other TopHat output...]
+    └── scripts/
+        ├── [...all sample-specific TopHat scripts...]
+├── assemblies/
+    ├── sample1_transcripts.gtf
+    ├── sample2_transcripts.gtf
+    ├── ...
+    ├── sampleN_transcripts.gtf
+    ├── sample1/
+        └── [...other Cufflinks output...]
+    ├── sample2/
+        └── [...other Cufflinks output...]
+    ├── ...
+        └── [...other Cufflinks output...]
+    ├── sampleN/
+        └── [...other Cufflinks output...]
+    ├── scripts/
+        ├── cufflinks_sample1.sh
+        ├── cufflinks_sample2.sh
+        ├── ...
+        └── cufflinks_sampleN.sh
+    └── merged/
+├── DE_analysis/
+├── reference/
+    └── Homo_Sapiens/</code></pre>
+<p>And the assembly step is done!</p>
+<h3>step 3: merge the sample-specific assemblies</h3>
+<p><strong>input</strong>: the sample-specific assemblies, in <code>.gtf</code> format<br /><strong>output</strong>: one merged assembly for the entire experiment, in <code>.gtf</code> format.<br /><strong>task</strong>: intelligently combine the sample-specific assemblies into one main transcriptome, which will represent our estimate of the transcript structure present in this particular experiment. Statistical analysis will be performed on the merged assembly.<br /><strong>run how many times:</strong> once for the entire project</p>
+<p>Compared to the other steps, this one is pretty short!</p>
+<h4>make a text file containing paths to all the sample-specific assemblies</h4>
+<p>I always call this file <code>assemblies.txt</code> and stick it in the <code>assemblies</code> subdirectory. For this project, the <code>assemblies.txt</code> file would look like this:</p>
+<pre><code>/ProjectName/assemblies/sample1_transcripts.gtf
+/ProjectName/assemblies/sample2_transcripts.gtf
+...
+/ProjectName/assemblies/sampleN_transcripts.gtf</code></pre>
+<p>List each file out explicitly - the ... is just for illustrative purposes here :)</p>
+<h4>submit a cuffmerge script</h4>
+<p>Once you make <code>assemblies.txt</code>, you just need to run <code>cuffmerge</code> on that assembly list, with a few other parameters. You'll use a file from your reference. Here is my <code>cuffmerge.sh</code> script, which I put in the main project directory:</p>
+<pre class="shell"><code>#!/bin/sh
+#$ -cwd -l mf=20G,h_vmem=5G -pe local 4 -m e -M myemail@email.com
+
+REFERENCE_SEQ=/ProjectName/reference/Homo_sapiens/UCSC/hg19/Sequence/Bowtie2Index/genome.fa
+CUFFMERGE_BINARY=/path/to/cuffmerge/binary/cuffmerge
+P=4
+
+$CUFFMERGE_BINARY -s $REFERENCE_SEQ -p $P -o /ProjectName/assemblies/merged /ProjectName/assemblies/assemblies.txt</code></pre>
+<p>Then I just do:</p>
+<pre class="shell"><code>[afrazee@enigma2 ProjectName]$ qsub cuffmerge.sh
+Your job &quot;cuffmerge.sh&quot; has been submitted</code></pre>
+<p>A fun trick: when you have a line in a bash script prefixed with <code>#$</code>, qsub will parse all its arguments from there. So, the second line in the <code>cuffmerge.sh</code> script takes care of all my memory requests and whatnot, so I don't have to worry about it when I actually run my <code>qsub</code> command.</p>
+<p>The output, <code>merged.gtf</code>, will be written to the <code>merged</code> folder specified by <code>-o</code>. Again, there are several other options, including one to do a guided merge (merge the assembled transcripts with annotated transcripts), detailed in the <a href="http://cufflinks.cbcb.umd.edu/manual.html">manual</a> -- but this is my general template.</p>
+<p>The project directory now looks like:</p>
+<pre><code>ProjectName/
+├── tophat.sh
+├── cufflinks.sh
+├── cuffmerge.sh
+├── data/
+    ├── [...all data...]
+├── alignments/
+    ├── sample1.bam
+    ├── sample2.bam
+    ├── ...
+    ├── sampleN.bam
+    ├── [...all other TopHat output...]
+    └── scripts/
+        ├── [...all sample-specific TopHat scripts...]
+├── assemblies/
+    ├── sample1_transcripts.gtf
+    ├── sample2_transcripts.gtf
+    ├── ...
+    ├── sampleN_transcripts.gtf
+    ├── [...all other Cufflinks output...]
+    ├── scripts/
+        ├── [...all sample-specific Cufflinks scripts...]
+    └── merged/
+        ├── merged.gtf
+        └── logs/
+├── DE_analysis/
+├── reference/
+    └── Homo_Sapiens/</code></pre>
+<h3>step 4: profit</h3>
+Congratulations! You now have a transcriptome assembly (<code>merged.gtf</code>) for your experiment, so you can do differential expression analysis (I mean, we already made a <code>DE_analysis</code> folder...it's just sitting there, waiting to be filled with statistics!). Or you can visualize your assembly. Or you can discover new isoforms. Or any number of other awesome things! The world of transcript analysis is your oyster. Have fun :)
+</div>
+</div>
+<div class="navbar navbar-fixed-bottom navbar-inverse">
+<div class="container">
+<div class="navbar-header">
+<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+<span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span>
+</button>
+</div>
+<div id="bottom-navbar" class="navbar-collapse collapse navbar-responsive-collapse">
+<ul class="nav navbar-nav navbar-right">
+<li class="nav">
+<p class="navbar-text">
+Toggle
+</p>
+</li>
+<li class="active">
+<a href="#" type="figure" class="toggle-global">Figures</a>
+</li>
+</ul>
+<ul class="nav navbar-nav navbar-left">
+<li class="dropup">
+<a href="#" class="dropdown-toggle" data-toggle="dropdown">Bootstrap theme <b class="caret"></b></a>
+<ul class="dropdown-menu">
+<li class="active">
+<a class="theme-switch" title="Default" href="#">Default</a>
+</li>
+<li>
+<a class="theme-switch" title="Amelia" href="#">Amelia</a>
+</li>
+<li>
+<a class="theme-switch" title="Cerulean" href="#">Cerulean</a>
+</li>
+<li>
+<a class="theme-switch" title="Cosmo" href="#">Cosmo</a>
+</li>
+<li>
+<a class="theme-switch" title="Cyborg" href="#">Cyborg</a>
+</li>
+<li>
+<a class="theme-switch" title="Journal" href="#">Journal</a>
+</li>
+<li>
+<a class="theme-switch" title="Flatly" href="#">Flatly</a>
+</li>
+<li>
+<a class="theme-switch" title="Readable" href="#">Readable</a>
+</li>
+<li>
+<a class="theme-switch" title="Simplex" href="#">Simplex</a>
+</li>
+<li>
+<a class="theme-switch" title="Slate" href="#">Slate</a>
+</li>
+<li>
+<a class="theme-switch" title="Spacelab" href="#">Spacelab</a>
+</li>
+<li>
+<a class="theme-switch" title="United" href="#">United</a>
+</li>
+</ul>
+</li>
+</ul>
+<ul class="nav navbar-nav navbar-left">
+<li class="dropup">
+<a href="#" class="dropdown-toggle" data-toggle="dropdown">Code highlighting <b class="caret"></b></a>
+<ul class="dropdown-menu">
+<li class="active">
+<a class="highlight-switch" title="HighlightJs" href="#">HighlightJs</a>
+</li>
+<li>
+<a class="highlight-switch" title="Dark" href="#">Dark</a>
+</li>
+<li>
+<a class="highlight-switch" title="Far" href="#">Far</a>
+</li>
+<li>
+<a class="highlight-switch" title="Idea" href="#">Idea</a>
+</li>
+<li>
+<a class="highlight-switch" title="Sunburst" href="#">Sunburst</a>
+</li>
+<li>
+<a class="highlight-switch" title="Zenburn" href="#">Zenburn</a>
+</li>
+<li>
+<a class="highlight-switch" title="Visual Studio" href="#">Visual Studio</a>
+</li>
+<li>
+<a class="highlight-switch" title="Ascetic" href="#">Ascetic</a>
+</li>
+<li>
+<a class="highlight-switch" title="Magula" href="#">Magula</a>
+</li>
+<li>
+<a class="highlight-switch" title="Github" href="#">Github</a>
+</li>
+<li>
+<a class="highlight-switch" title="Google Code" href="#">Google Code</a>
+</li>
+<li>
+<a class="highlight-switch" title="Brown Paper" href="#">Brown Paper</a>
+</li>
+<li>
+<a class="highlight-switch" title="School Book" href="#">School Book</a>
+</li>
+<li>
+<a class="highlight-switch" title="IR Black" href="#">IR Black</a>
+</li>
+<li>
+<a class="highlight-switch" title="Solarized - Dark" href="#">Solarized - Dark</a>
+</li>
+<li>
+<a class="highlight-switch" title="Solarized - Light" href="#">Solarized - Light</a>
+</li>
+<li>
+<a class="highlight-switch" title="Arta" href="#">Arta</a>
+</li>
+<li>
+<a class="highlight-switch" title="Monokai" href="#">Monokai</a>
+</li>
+<li>
+<a class="highlight-switch" title="Xcode" href="#">Xcode</a>
+</li>
+<li>
+<a class="highlight-switch" title="Pojoaque" href="#">Pojoaque</a>
+</li>
+<li>
+<a class="highlight-switch" title="Rainbow" href="#">Rainbow</a>
+</li>
+<li>
+<a class="highlight-switch" title="Tomorrow" href="#">Tomorrow</a>
+</li>
+<li>
+<a class="highlight-switch" title="Tomorrow Night" href="#">Tomorrow Night</a>
+</li>
+<li>
+<a class="highlight-switch" title="Tomorrow Night Bright" href="#">Tomorrow Night Bright</a>
+</li>
+<li>
+<a class="highlight-switch" title="Tomorrow Night Blue" href="#">Tomorrow Night Blue</a>
+</li>
+<li>
+<a class="highlight-switch" title="Tomorrow Night Eighties" href="#">Tomorrow Night Eighties</a>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<link rel="alternate stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" title="Default" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/bootswatch/3.0.0/amelia/bootstrap.min.css" title="Amelia" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/bootswatch/3.0.0/cerulean/bootstrap.min.css" title="Cerulean" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/bootswatch/3.0.0/cosmo/bootstrap.min.css" title="Cosmo" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/bootswatch/3.0.0/cyborg/bootstrap.min.css" title="Cyborg" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/bootswatch/3.0.0/journal/bootstrap.min.css" title="Journal" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/bootswatch/3.0.0/flatly/bootstrap.min.css" title="Flatly" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/bootswatch/3.0.0/readable/bootstrap.min.css" title="Readable" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/bootswatch/3.0.0/simplex/bootstrap.min.css" title="Simplex" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/bootswatch/3.0.0/slate/bootstrap.min.css" title="Slate" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/bootswatch/3.0.0/spacelab/bootstrap.min.css" title="Spacelab" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://netdna.bootstrapcdn.com/bootswatch/3.0.0/united/bootstrap.min.css" title="United" media="screen"></link><link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/default.min.css" title="HighlightJs" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/dark.min.css" title="Dark" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/far.min.css" title="Far" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/idea.min.css" title="Idea" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/sunburst.min.css" title="Sunburst" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/zenburn.min.css" title="Zenburn" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/vs.min.css" title="Visual Studio" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/ascetic.min.css" title="Ascetic" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/magula.min.css" title="Magula" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/github.min.css" title="Github" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/googlecode.min.css" title="Google Code" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/brown_paper.min.css" title="Brown Paper" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/school_book.min.css" title="School Book" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/ir_black.min.css" title="IR Black" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/solarized_dark.min.css" title="Solarized - Dark" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/solarized_light.min.css" title="Solarized - Light" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/arta.min.css" title="Arta" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/monokai.min.css" title="Monokai" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/xcode.min.css" title="Xcode" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/pojoaque.min.css" title="Pojoaque" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/rainbow.min.css" title="Rainbow" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/tomorrow.min.css" title="Tomorrow" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/tomorrow-night.min.css" title="Tomorrow Night" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/tomorrow-night-bright.min.css" title="Tomorrow Night Bright" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/tomorrow-night-blue.min.css" title="Tomorrow Night Blue" media="screen"></link> <link rel="alternate stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/tomorrow-night-eighties.min.css" title="Tomorrow Night Eighties" media="screen"></link>
+</div>
+<div id="push">
+
+</div>
+<div id="footer">
+<div class="container">
+<p class="text-muted" id="credit">
+Styled with <a href="https://github.com/jimhester/knitrBootstrap">knitrBootstrap</a>
+</p>
+</div>
+</div>
+<link rel="stylesheet" id="theme" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" media="screen"></link><link rel="stylesheet" id="highlight" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/7.3/styles/default.min.css" media="screen"></link>
+</div>
+</body>
+</html>
