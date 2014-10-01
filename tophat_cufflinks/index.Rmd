@@ -1,8 +1,21 @@
+---
+output:
+  knitrBootstrap::bootstrap_document:
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
+  html_document:
+    toc: true
+    theme: united
+---
+
 # Analyzing RNA-seq data with the "Tuxedo" tools
 
 _Introduction/tl;dr: I wrote this post as a reference for folks that are getting started with RNA-seq data analysis. It begins with an informal, big-picture overview of RNA-seq data analysis, and the rest of the post outlines one standard RNA-seq workflow (read alignment + transcriptome assembly, no differential expression analysis). Much of this protocol is specific to the JHSPH biostat computing setup._
 
-### preliminaries: what's RNA-seq?
+## preliminaries
+
+### what's RNA-seq?
+
 [RNA-seq](http://en.wikipedia.org/wiki/RNA-Seq) is a high-throughput technology used to measure gene expression in cell populations. For a super bare-bones picture of what gene expression is, please enjoy this ASCII art I made to illustrate the process:
 
 ```
@@ -21,10 +34,11 @@ _Introduction/tl;dr: I wrote this post as a reference for folks that are getting
 
 As shown in the awesome ASCII illustration, RNA molecules are basically strings of characters (G, C, U, or A; referred to as "nucleotides" or "bases"). RNA molecules are transcribed from DNA, and mature RNA consists only of the "expressed" parts of a gene (denoted in the illustration between curly brackets). Sequencing machines read off the base sequences of the mature RNA molecules in the cells in question. Base calling is kind of a hard problem, and current technologies can only read off about 100 nucleotides in a row, even though actual human RNA transcripts can be hundreds or thousands of bases long. These ~100-base reads are then written out into a text file in [FASTQ format](http://en.wikipedia.org/wiki/FASTQ_format). These are what I consider "raw" RNA-seq data.
 
-### preliminaries II: why is RNA-seq important?
+### why is RNA-seq important?
+
 We can do lots of fun and scientifically-interesting things with RNA-seq data. I am mostly in the business of developing statistical methods to determine whether specific RNA transcripts are expressed at different levels in different cell populations (differential expression analysis). You can measure a transcript's expression level, or abundance in the cell, by figuring out how many RNA-seq reads came from that particular transcript. You can also do a lot of other cool stuff with RNA-seq, like discover new genes/transcripts, compare genes' expression levels to each other, or study the expression profile of a gene or transcript over time (e.g., which genes are expressed while a cell is developing from a stem cell into a heart cell?). Since there is so much we can learn from this type of data, it's being used to research complex diseases (e.g. cancer, psychiatric disease), evolutionary biology, organism development, and lots of other fields. If you'd like a more formal overview of RNA-seq, I highly recommend [this review paper](http://genomebiology.com/2010/11/12/220) (open access!). A more formal writeup of the analysis process is available in this [protocols paper](http://europepmc.org/articles/PMC3334321/) (also open access). 
 
-### preliminaries III: what do I need to get started?
+### what do I need to get started?
 
 * A Linux cluster with the Sun Grid Engine scheduling system. (Definitely not required for RNA-seq analysis, but the workflow described here assumes it).
 * [TopHat](http://ccb.jhu.edu/software/tophat/index.shtml) 
@@ -33,7 +47,10 @@ We can do lots of fun and scientifically-interesting things with RNA-seq data. I
 * A good text editor. I use [Sublime](http://www.sublimetext.com/) on my laptop, and I transfer files to the cluster using sftp (sometimes with the [Cyberduck](http://cyberduck.io/) GUI). To edit text files directly on the cluster, I use emacs and I open files for editing with `emacs -nw myfile.sh`. When I'm done editing the file, I close it with ctrl-x ctrl-c, then hit "y" to save.
 * Data. This pipeline will work if you're starting with either FASTQ files (raw reads) or .bam files (read alignments). 
 
-### step 0: setting up the project directory
+## steps
+
+### 0: setting up the project directory
+
 I usually set up the directory for an RNA-seq analysis like this, if I'm starting with raw reads:
 ```
 ProjectName/
@@ -73,7 +90,7 @@ ProjectName/
 ```
 You don't need new reference files for every experiment you analyze, but for this example, I'm just going to assume the reference is located in your project directory, so that the paths in the scripts make sense. 
 
-### step 1: read alignment
+### 1: read alignment
 **input**: RNA-seq reads, in FASTQ or FASTA format (extensions `.fastq`, `.fq`, `.fasta`, or `.fa`). They can be zipped/compressed.  
 **output**: read alignments, in `.bam` format. (BAM is the compressed form of SAM, i.e. "sequence alignment/map" format, [described here](http://samtools.sourceforge.net/SAMv1.pdf)).  
 **task**: determine where on the _genome_ (DNA) each RNA-seq read came from  
@@ -168,7 +185,8 @@ ProjectName/
 ```
 
 
-### step 2: transcript assembly
+### 2: transcript assembly
+
 **input**: read alignments, in `.bam` format  
 **output**: a transcript assembly, in [gtf format](http://www.ensembl.org/info/website/upload/gff.html). (A GTF file is a plain-text file that specifies locations, strands, and structures of genomic features. Usually there is one row per exon/coding sequence, and the rightmost column specifies which exons belong to which transcripts/genes).  
 **task**: reconstruct the set of RNA transcripts generated by each gene in each sample, based on the RNA-seq reads  
@@ -252,7 +270,7 @@ ProjectName/
 
 And the assembly step is done!
 
-### step 3: merge the sample-specific assemblies
+### 3: merge the sample-specific assemblies
 **input**: the sample-specific assemblies, in `.gtf` format  
 **output**: one merged assembly for the entire experiment, in `.gtf` format.  
 **task**: intelligently combine the sample-specific assemblies into one main transcriptome, which will represent our estimate of the transcript structure present in this particular experiment. Statistical analysis will be performed on the merged assembly.  
@@ -328,7 +346,7 @@ ProjectName/
     └── Homo_Sapiens/
 ```
 
-### step 4: profit
+### 4: profit
 
 Congratulations! You now have a transcriptome assembly (`merged.gtf`) for your experiment, so you can do differential expression analysis (I mean, we already made a `DE_analysis` folder...it's just sitting there, waiting to be filled with statistics!). Or you can visualize your assembly. Or you can discover new isoforms. Or any number of other awesome things! The world of transcript analysis is your oyster. Have fun :) 
 
