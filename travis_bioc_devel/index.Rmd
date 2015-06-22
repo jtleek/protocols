@@ -296,10 +296,4 @@ bibliography()
 file.remove('NewPostRefs.bib')
 ```
 
-Date this protocol was last rendered:
-
-```{r date, echo = FALSE}
-## date
-Sys.time()
-```
-
+Date this protocol was last modified: `r Sys.time()`.

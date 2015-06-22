@@ -1,0 +1,71 @@
+---
+output:
+  knitrBootstrap::bootstrap_document:
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
+  html_document:
+    toc: true
+    theme: spacelab
+---
+
+Protocol template
+=================
+
+
+```{r bibsetup, echo=FALSE, message=FALSE, warning=FALSE}
+## Load knitcitations with a clean bibliography
+library('knitcitations')
+cleanbib()
+cite_options(hyperlink = 'to.doc', citation_format = 'text', style = 'html')
+
+bibs <- c('knitcitations' = citation('knitcitations'),
+    R = citation()
+)
+write.bibtex(bibs, file = 'protocolTemplate.bib')
+bib <- read.bibtex('protocolTemplate.bib')
+names(bib) <- names(bibs)
+```
+
+This protocol template was contributed by [L. Collado-Torres](http://bit.ly/LColladoTorres).
+
+
+# Overview
+
+
+TODO list:
+
+* Check the [Markdown basics](http://rmarkdown.rstudio.com/authoring_basics.html) so you'll be familiar with the markdown syntax.
+* Change the title.
+* Choose your favorite HTML format. See http://rmarkdown.rstudio.com/html_document_format.html for details.
+* Specify your name as the contributor and link to your webpage or GitHub profile.
+* If your template includes `R` code, include the session information using `devtools::session_info()`. This is specially important if you have any packages installed from GitHub. You might want to use `options(width = 120)` before `devtools::session_info()`.
+* Use [render.R](../render.R) to render your file. This will create the HTML file.
+
+
+# References
+
+
+
+Citations made with `knitcitations` `r citep(bib[['knitcitations']])`.
+
+
+```{r 'bibliography', results='asis', echo=FALSE, cache=FALSE}
+## Print bibliography
+bibliography()
+```
+
+```{r 'cleanupBib', echo = FALSE, results = 'hide'}
+## Clean up
+file.remove('protocolTemplate.bib')
+```
+
+`R` information (delete this if no `R` code was used)
+
+```{r 'rSession', echo = FALSE}
+library('devtools')
+options(width = 120)
+session_info()
+```
+
+
+Date this protocol was last modified: `r Sys.time()`.

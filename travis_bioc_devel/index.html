@@ -887,9 +887,9 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <h1>Routinely testing your R package with Travis</h1>
 <p>This protocol was contributed by <a href="http://bit.ly/LColladoTorres">L. Collado-Torres</a>.</p>
 <h1>Overview</h1>
-<p>At some point after in the <code>R</code> (<a href='http://www.R-project.org/'>R Core Team, 2014</a>) learning curve you get to a level where you want to write your own functions. The next step is to share the functions in the form of an <code>R</code> package. The Leek group way of doing so is described in more detail <a href="https://github.com/jtleek/rpackages">here</a> (<a href='https://github.com/jtleek/rpackages'>jtleek, 2014</a>).</p>
+<p>At some point after in the <code>R</code> <a id='cite-R'></a>(<a href='http://www.R-project.org/'>R Core Team, 2015</a>) learning curve you get to a level where you want to write your own functions. The next step is to share the functions in the form of an <code>R</code> package. The Leek group way of doing so is described in more detail <a href="https://github.com/jtleek/rpackages">here</a> <a id='cite-greycite18059'></a>(<a href='https://github.com/jtleek/rpackages'>jtleek, 2015</a>).</p>
 <p>Sharing your functions as an <code>R</code> package means that others can easily use them after installing the package. This all sounds great until you then realize that there is some responsibility on your side to make sure things are working properly. <code>R</code> has a command to help you do so, namely <em>R CMD check</em> which verifies that everything is in order.</p>
-<p>Projects like <a href="http://www.bioconductor.org/">Bioconductor</a> (<a href='http://genomebiology.com/2004/5/10/R80'>Gentleman, Carey, Bates, and others, 2004</a>) help both the developer and the user community by running <em>R CMD check</em> on their packages every day. Doing so helps identify any issues your functions might have because something else changed (like a function you imported). Bioconductor runs other tests and demands that a package satisfies specific criteria to be included in the project, but the idea of routinely checking your <code>R</code> package remains.</p>
+<p>Projects like <a href="http://www.bioconductor.org/">Bioconductor</a> <a id='cite-bioc'></a>(<a href='http://www.nature.com/nmeth/journal/v12/n2/full/nmeth.3252.html'>Huber, W., Carey, J., et al., 2015</a>) help both the developer and the user community by running <em>R CMD check</em> on their packages every day. Doing so helps identify any issues your functions might have because something else changed (like a function you imported). Bioconductor runs other tests and demands that a package satisfies specific criteria to be included in the project, but the idea of routinely checking your <code>R</code> package remains.</p>
 <p>In recent years, more and more developers have turned towards hosting their packages in <a href="https://github.com/">GitHub</a>, specially in the development phase even when working with <a href="http://cran.r-project.org/">CRAN</a> or Bioconductor (through a <a href="http://www.bioconductor.org/developers/how-to/git-svn/">git-svn bridge</a>). While as a developer you can test your package locally, at some point it starts to take a large chunk of your time. That's where open source tools like <a href="https://travis-ci.org/">Travis CI</a> make your life as a developer easier. You can basically set Travis CI to run <em>R CMD check</em> for you every time you push code to GitHub. This protocol explains how to setup Travis CI.</p>
 <h1>Setting up Travis</h1>
 <p>To start, we will assume that you have a GitHub account with at least one repository that contains an <code>R</code> package, lets call it <em>rpack</em>. Your very first step is to sign in to Travis using your GitHub account at <a href="https://travis-ci.org/">travis-ci.org/</a>.</p>
@@ -900,7 +900,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <img src="travis-switch.png" alt="Travis switch" style="width: 500px;"/>
 </center>
 <h3>Setup via devtools</h3>
-<p>If you are using <code>devtools</code> (<a href='http://CRAN.R-project.org/package=devtools'>Wickham and Chang, 2014</a>) for developing your package, you can simply add Travis to <code>rpack</code> by using</p>
+<p>If you are using <code>devtools</code> <a id='cite-devtools'></a>(<a href='http://CRAN.R-project.org/package=devtools'>Wickham and Chang, 2015</a>) for developing your package, you can simply add Travis to <code>rpack</code> by using</p>
 <div class="row">
 <button class="source R toggle btn btn-xs btn-primary">
 <span class="glyphicon glyphicon-chevron-down"></span> R source
@@ -912,7 +912,7 @@ use_travis('path to rpack')</code></pre>
 <h3>Manual basic setup</h3>
 <h4>Add .travis.yml</h4>
 <p>The next step is to add the file <strong>.travis.yml</strong> to your repository (in the main directory). This file will specify your Travis configuration such as which <code>R</code> packages to install, when you want to be notified by Travis, and what information you want to see.</p>
-<p>The easiest way to setup Travis for R projects is to use <a href="https://github.com/craigcitro/r-travis">r-travis</a> (<a href='https://github.com/craigcitro/r-travis'>craigcitro, 2014</a>). <a href="https://github.com/craigcitro/r-travis/wiki">r-travis instructions</a> show how to add <strong>.travis.yml</strong> with commands, but basically, you want to start by copying the example configuration file shown below into your <strong>.travis.yml</strong> file:</p>
+<p>The easiest way to setup Travis for R projects is to use <a href="https://github.com/craigcitro/r-travis">r-travis</a> <a id='cite-greycite18061'></a>(<a href='https://github.com/craigcitro/r-travis'>craigcitro, 2015</a>). <a href="https://github.com/craigcitro/r-travis/wiki">r-travis instructions</a> show how to add <strong>.travis.yml</strong> with commands, but basically, you want to start by copying the example configuration file shown below into your <strong>.travis.yml</strong> file:</p>
 <pre><code># Sample .travis.yml for R projects.
 #
 # See README.md for instructions, or for more configuration options,
@@ -1054,35 +1054,28 @@ Are you building packages for <a href="https://twitter.com/hashtag/rstats?src=ha
 — John Muschelli (<span class="citation">@StrictlyStat</span>) <a href="https://twitter.com/StrictlyStat/status/510134625705160704">September 11, 2014</a>
 </blockquote>
 <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
-<p>Citations made with <code>knitcitations</code> (<a href='https://github.com/cboettig/knitcitations'>Boettiger, 2014</a>).</p>
+<p>Citations made with <code>knitcitations</code> <a id='cite-knitcitations'></a>(<a href='http://CRAN.R-project.org/package=knitcitations'>Boettiger, 2015</a>).</p>
 <div class="row">
 <p>
-<a id='bib-knitcitations'></a><a href="#cite-knitcitations">[1]</a><cite> C. Boettiger. <EM>knitcitations: Citations for knitr markdown files</EM>. R package version 1.0.2. 2014. URL: <a href="https://github.com/cboettig/knitcitations">https://github.com/cboettig/knitcitations</a>.</cite>
+<a id='bib-knitcitations'></a><a href="#cite-knitcitations">[1]</a><cite> C. Boettiger. <em>knitcitations: Citations for Knitr Markdown Files</em>. R package version 1.0.6. 2015. URL: <a href="http://CRAN.R-project.org/package=knitcitations">http://CRAN.R-project.org/package=knitcitations</a>.</cite>
 </p>
 <p>
-<a id='bib-greycite18061'></a><a href="#cite-greycite18061">[2]</a><cite> craigcitro. <EM>craigcitro/r-travis</EM>. <a href="https://github.com/craigcitro/r-travis">https://github.com/craigcitro/r-travis</a>. 2014. URL: <a href="https://github.com/craigcitro/r-travis">https://github.com/craigcitro/r-travis</a>.</cite>
+<a id='bib-greycite18061'></a><a href="#cite-greycite18061">[2]</a><cite> craigcitro. <em>craigcitro/r-travis</em>. <a href="https://github.com/craigcitro/r-travis">https://github.com/craigcitro/r-travis</a>. 2015. URL: <a href="https://github.com/craigcitro/r-travis">https://github.com/craigcitro/r-travis</a>.</cite>
 </p>
 <p>
-<a id='bib-bioc'></a><a href="#cite-bioc">[3]</a><cite> R. C. Gentleman, V. J. Carey, D. M. Bates and others. “Bioconductor: Open software development for computational biology and bioinformatics”. In: <EM>Genome Biology</EM> 5 (2004), p. R80. URL: <a href="http://genomebiology.com/2004/5/10/R80">http://genomebiology.com/2004/5/10/R80</a>.</cite>
+<a id='bib-bioc'></a><a href="#cite-bioc">[3]</a><cite> Huber, W., Carey, V. J., et al. “Orchestrating high-throughput genomic analysis with Bioconductor”. In: <em>Nature Methods</em> 12.2 (2015), pp. 115–121. URL: <a href="http://www.nature.com/nmeth/journal/v12/n2/full/nmeth.3252.html">http://www.nature.com/nmeth/journal/v12/n2/full/nmeth.3252.html</a>.</cite>
 </p>
 <p>
-<a id='bib-greycite18059'></a><a href="#cite-greycite18059">[4]</a><cite> jtleek. <EM>jtleek/rpackages</EM>. <a href="https://github.com/jtleek/rpackages">https://github.com/jtleek/rpackages</a>. 2014. URL: <a href="https://github.com/jtleek/rpackages">https://github.com/jtleek/rpackages</a>.</cite>
+<a id='bib-greycite18059'></a><a href="#cite-greycite18059">[4]</a><cite> jtleek. <em>jtleek/rpackages</em>. <a href="https://github.com/jtleek/rpackages">https://github.com/jtleek/rpackages</a>. 2015. URL: <a href="https://github.com/jtleek/rpackages">https://github.com/jtleek/rpackages</a>.</cite>
 </p>
 <p>
-<a id='bib-R'></a><a href="#cite-R">[5]</a><cite> R Core Team. <EM>R: A Language and Environment for Statistical Computing</EM>. R Foundation for Statistical Computing. Vienna, Austria, 2014. URL: <a href="http://www.R-project.org/">http://www.R-project.org/</a>.</cite>
+<a id='bib-R'></a><a href="#cite-R">[5]</a><cite> R Core Team. <em>R: A Language and Environment for Statistical Computing</em>. R Foundation for Statistical Computing. Vienna, Austria, 2015. URL: <a href="http://www.R-project.org/">http://www.R-project.org/</a>.</cite>
 </p>
 <p>
-<a id='bib-devtools'></a><a href="#cite-devtools">[6]</a><cite> H. Wickham and W. Chang. <EM>devtools: Tools to make developing R code easier</EM>. R package version 1.6. 2014. URL: <a href="http://CRAN.R-project.org/package=devtools">http://CRAN.R-project.org/package=devtools</a>.</cite>
+<a id='bib-devtools'></a><a href="#cite-devtools">[6]</a><cite> H. Wickham and W. Chang. <em>devtools: Tools to Make Developing R Packages Easier</em>. R package version 1.8.0. 2015. URL: <a href="http://CRAN.R-project.org/package=devtools">http://CRAN.R-project.org/package=devtools</a>.</cite>
 </p>
 </div>
-<p>Date this protocol was last rendered:</p>
-<div class="row">
-<button class="output R toggle btn btn-xs btn-success">
-<span class="glyphicon glyphicon-chevron-down"></span> R output
-</button>
-<pre style=""><code class="output r">## [1] "2014-10-01 17:10:32 EDT"
-</code></pre>
-</div>
+Date this protocol was last modified: 2015-06-22 15:35:48.
 </div>
 </div>
 <div class="navbar navbar-fixed-bottom navbar-inverse">
@@ -1110,20 +1103,6 @@ Languages
 </li>
 <li>
 <a href="#" type="all-source" class="toggle-global">All</a>
-</li>
-</ul>
-</li>
-<li class="dropup">
-<a href="#" class="dropdown-toggle" data-toggle="dropdown">Output <b class="caret"></b></a>
-<ul class="dropdown-menu">
-<li class="dropdown-header">
-Type
-</li>
-<li class="active">
-<a href="#" class="toggle-global output" type="output">output</a>
-</li>
-<li>
-<a href="#" type="all-output" class="toggle-global">All</a>
 </li>
 </ul>
 </li>
