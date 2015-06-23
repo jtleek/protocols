@@ -35,7 +35,7 @@ This protocol template was contributed by [L. Collado-Torres](http://bit.ly/LCol
 
 # Overview
 
-At [Leek group](https://github.com/leekgroup) we have a diverse group of members with expertise in different areas. To make it easier for others in the group to accomplish some recurrent tasks, [Jeff](http://jtleek.com/) loves it when members of the group write a short protocol for others to follow. This document is a short guide on how to submit a new protocol.
+At [Leek group](https://github.com/leekgroup) we have a diverse group of members with expertise in different areas. To make it easier for others in the group to accomplish some recurrent tasks, we like members of the group write a short protocol for others to follow. This document is a short guide on how to submit a new protocol.
 
 
 # Introduction

@@ -13,8 +13,15 @@ protocols
 
 Here you can find a set of lab analysis protocols.
 
+
+### RNA-sequencing
 * [Analyzing RNA-seq data with the "Tuxedo" tools](tophat_cufflinks/)
+
+### Package development
 * [Routinely testing your R package with Travis](travis_bioc_devel/)
+* [Leek group guide to R packages](https://github.com/jtleek/rpackages)
+
+## Submitting protodcols
 * [How to submit a new protocol](submit_protocol/)
 * [Repositories at `leekgroup`](leekgroup_repo/)
 

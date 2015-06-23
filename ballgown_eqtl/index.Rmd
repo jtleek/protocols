@@ -1,0 +1,108 @@
+---
+output:
+  knitrBootstrap::bootstrap_document:
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
+  html_document:
+    toc: true
+    theme: spacelab
+---
+
+eQTL Analysis with Ballgown
+=================
+
+
+```{r bibsetup, echo=FALSE, message=FALSE, warning=FALSE}
+## Load knitcitations with a clean bibliography
+library('knitcitations')
+cleanbib()
+cite_options(hyperlink = 'to.doc', citation_format = 'text', style = 'html')
+
+bibs <- c('knitcitations' = citation('knitcitations'),
+    R = citation()
+)
+write.bibtex(bibs, file = 'protocolTemplate.bib')
+bib <- read.bibtex('protocolTemplate.bib')
+names(bib) <- names(bibs)
+```
+
+This protocol template was contributed by [Jeff Leek](http://jtleek.com/).
+
+
+# Overview
+
+The goal of an eQTL analysis is to identify associations between gene expression features (exons, genes, transcripts) and genetic variation (typically single nucleotide polymorphisms). The usual approach to this problem is to fit a linear model where the outcome is gene expression and the covariates are genetic variants. 
+
+$$ E_{ij} = b^0_{ikj} + b^s_{ikj} S_{kj} + \sum_{m} b^c_{ikj} c_{mj} + e_{ikj}$$
+
+where $E_{ij}$ is the expression of feature $i$ on transcript $j$, $S_{kj}$ is the value of SNP $k$ on sample $j$, $c_{mj}$ is the value for confounder $m$ on sample $j$, and $e$ is (hopefully) independent noise. This type of model can be easily fit in `R` with the [MatrixEQTL](http://www.bios.unc.edu/research/genomic_software/Matrix_eQTL/) package. In this protocal we will cover:
+
+1. Loading a Ballgown object (for more about Ballgown [see this vignette](http://bioconductor.org/packages/release/bioc/vignettes/ballgown/inst/doc/ballgown.html))
+2. Matching IDs between multiple data types
+3. Running MatrixEQTL 
+4. Visualizing the output
+5. Common errors. 
+
+# Example data: GEUVADIS
+
+We will be using data from the [GEUVADIS project](http://www.geuvadis.org/web/geuvadis) as an example for this protocol. You can obtain the GEUVADIS data from the [code for our Ballgown paper](https://github.com/leekgroup/ballgown_code). I am going to distribute a subset of this (relatively large) data set to illustrate the protocol. If you download the GEUVADIS `ballgown` object from the Ballgown code site, you can get the subset I will be using by running the following code: 
+
+```{r eval=FALSE}
+# Load data and set seed
+load("geuvadisbg.rda")
+set.seed(123)
+
+## Remove transcripts with mean FPKM < 5
+highexpr = exprfilter(geuvadis,cutoff=5)
+
+index = sample(1:334206,size=1000) %in% 1:334206
+smallbg = subset(geuvadisbg,1:1000 %in% index,genomesubset=TRUE)
+```
+
+This data set consists of a little over 600 samples from multiple populations. We will use these data to peform a simple eQTL analysis using Ballgown. 
+
+# Loading the data
+
+
+
+
+# Overview
+
+
+TODO list:
+
+* Check the [Markdown basics](http://rmarkdown.rstudio.com/authoring_basics.html) so you'll be familiar with the markdown syntax.
+* Change the title.
+* Choose your favorite HTML format. See http://rmarkdown.rstudio.com/html_document_format.html for details.
+* Specify your name as the contributor and link to your webpage or GitHub profile.
+* If your template includes `R` code, include the session information using `devtools::session_info()`. This is specially important if you have any packages installed from GitHub. You might want to use `options(width = 120)` before `devtools::session_info()`.
+* Use [render.R](../render.R) to render your file. This will create the HTML file.
+
+
+# References
+
+
+
+Citations made with `knitcitations` `r citep(bib[['knitcitations']])`.
+
+
+```{r 'bibliography', results='asis', echo=FALSE, cache=FALSE}
+## Print bibliography
+bibliography()
+```
+
+```{r 'cleanupBib', echo = FALSE, results = 'hide'}
+## Clean up
+file.remove('protocolTemplate.bib')
+```
+
+`R` information (delete this if no `R` code was used)
+
+```{r 'rSession', echo = FALSE}
+library('devtools')
+options(width = 120)
+session_info()
+```
+
+
+Date this protocol was last modified: `r Sys.time()`.
