@@ -350,3 +350,5 @@ ProjectName/
 
 Congratulations! You now have a transcriptome assembly (`merged.gtf`) for your experiment, so you can do differential expression analysis (I mean, we already made a `DE_analysis` folder...it's just sitting there, waiting to be filled with statistics!). Or you can visualize your assembly. Or you can discover new isoforms. Or any number of other awesome things! The world of transcript analysis is your oyster. Have fun :) 
 
+
+Date this protocol was last modified: `r Sys.time()`.

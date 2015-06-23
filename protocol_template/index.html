@@ -865,264 +865,84 @@
 <div class="container">
 <div class="row row-offcanvas row-offcanvas-right">
 <div class="contents col-xs-12 col-md-10">
-<h1>Analyzing RNA-seq data with the &quot;Tuxedo&quot; tools</h1>
-<p><em>Introduction/tl;dr: I wrote this post as a reference for folks that are getting started with RNA-seq data analysis. It begins with an informal, big-picture overview of RNA-seq data analysis, and the rest of the post outlines one standard RNA-seq workflow (read alignment + transcriptome assembly, no differential expression analysis). Much of this protocol is specific to the JHSPH biostat computing setup.</em></p>
-<h2>preliminaries</h2>
-<h3>what's RNA-seq?</h3>
-<p><a href="http://en.wikipedia.org/wiki/RNA-Seq">RNA-seq</a> is a high-throughput technology used to measure gene expression in cell populations. For a super bare-bones picture of what gene expression is, please enjoy this ASCII art I made to illustrate the process:</p>
-<pre><code>[DNA]            ACGTAGGT{CGTATTT}AGCGT{AGCGCCCGA}TTACA
-                                    |                   
-                              transcription
-                                    |
-                                    V
-[pre-RNA]                {GCAUAAA}UCGCA{UCGCGGGCU}
-                                    |
-                                 splicing
-                                    |
-                                    V
-[RNA]                      {GCAUAAA}{UCGCGGGCU}                            </code></pre>
-<p>As shown in the awesome ASCII illustration, RNA molecules are basically strings of characters (G, C, U, or A; referred to as &quot;nucleotides&quot; or &quot;bases&quot;). RNA molecules are transcribed from DNA, and mature RNA consists only of the &quot;expressed&quot; parts of a gene (denoted in the illustration between curly brackets). Sequencing machines read off the base sequences of the mature RNA molecules in the cells in question. Base calling is kind of a hard problem, and current technologies can only read off about 100 nucleotides in a row, even though actual human RNA transcripts can be hundreds or thousands of bases long. These ~100-base reads are then written out into a text file in <a href="http://en.wikipedia.org/wiki/FASTQ_format">FASTQ format</a>. These are what I consider &quot;raw&quot; RNA-seq data.</p>
-<h3>why is RNA-seq important?</h3>
-<p>We can do lots of fun and scientifically-interesting things with RNA-seq data. I am mostly in the business of developing statistical methods to determine whether specific RNA transcripts are expressed at different levels in different cell populations (differential expression analysis). You can measure a transcript's expression level, or abundance in the cell, by figuring out how many RNA-seq reads came from that particular transcript. You can also do a lot of other cool stuff with RNA-seq, like discover new genes/transcripts, compare genes' expression levels to each other, or study the expression profile of a gene or transcript over time (e.g., which genes are expressed while a cell is developing from a stem cell into a heart cell?). Since there is so much we can learn from this type of data, it's being used to research complex diseases (e.g. cancer, psychiatric disease), evolutionary biology, organism development, and lots of other fields. If you'd like a more formal overview of RNA-seq, I highly recommend <a href="http://genomebiology.com/2010/11/12/220">this review paper</a> (open access!). A more formal writeup of the analysis process is available in this <a href="http://europepmc.org/articles/PMC3334321/">protocols paper</a> (also open access).</p>
-<h3>what do I need to get started?</h3>
+<h1>Protocol template</h1>
+<p>This protocol template was contributed by <a href="http://bit.ly/LColladoTorres">L. Collado-Torres</a>.</p>
+<h1>Overview</h1>
+<p>TODO list:</p>
 <ul>
-<li>A Linux cluster with the Sun Grid Engine scheduling system. (Definitely not required for RNA-seq analysis, but the workflow described here assumes it).</li>
-<li><a href="http://ccb.jhu.edu/software/tophat/index.shtml">TopHat</a></li>
-<li><a href="http://cufflinks.cbcb.umd.edu/">Cufflinks</a></li>
-<li>A reference/index/set of annotations for the organism you're analyzing. I recommend downloading a reference from <a href="http://ccb.jhu.edu/software/tophat/igenomes.shtml">this page</a>. Any of the choices for your organism are fine.</li>
-<li>A good text editor. I use <a href="http://www.sublimetext.com/">Sublime</a> on my laptop, and I transfer files to the cluster using sftp (sometimes with the <a href="http://cyberduck.io/">Cyberduck</a> GUI). To edit text files directly on the cluster, I use emacs and I open files for editing with <code>emacs -nw myfile.sh</code>. When I'm done editing the file, I close it with ctrl-x ctrl-c, then hit &quot;y&quot; to save.</li>
-<li>Data. This pipeline will work if you're starting with either FASTQ files (raw reads) or .bam files (read alignments).</li>
+<li>Check the <a href="http://rmarkdown.rstudio.com/authoring_basics.html">Markdown basics</a> so you'll be familiar with the markdown syntax.</li>
+<li>Change the title.</li>
+<li>Choose your favorite HTML format. See http://rmarkdown.rstudio.com/html_document_format.html for details.</li>
+<li>Specify your name as the contributor and link to your webpage or GitHub profile.</li>
+<li>If your template includes <code>R</code> code, include the session information using <code>devtools::session_info()</code>. This is specially important if you have any packages installed from GitHub. You might want to use <code>options(width = 120)</code> before <code>devtools::session_info()</code>.</li>
+<li>Use <a href="../render.R">render.R</a> to render your file. This will create the HTML file.</li>
 </ul>
-<h2>steps</h2>
-<h3>0: setting up the project directory</h3>
-<p>I usually set up the directory for an RNA-seq analysis like this, if I'm starting with raw reads:</p>
-<pre><code>ProjectName/
-├── data/
-    ├── sample1_1.fastq
-    ├── sample1_2.fastq
-    ├── sample2_1.fastq
-    ├── sample2_1.fastq
-    ├── ...
-    ├── sampleN_1.fastq
-    └── sampleN_2.fastq
-├── alignments/
-    └── scripts/
-├── assemblies/
-    ├── scripts/
-    └── merged/
-├── DE_analysis/
-├── reference/
-    └── Homo_Sapiens/</code></pre>
-<p>(for transcript assembly with Cufflinks, usually we use paired-end reads, which is why there are 2 fastq files for each sample).</p>
-<p>My setup will look like this, if I'm starting from read alignments (bam files):</p>
-<pre><code>ProjectName/
-├── alignments/
-    ├── sample1.bam
-    ├── sample2.bam
-    ├── ...
-    └── sampleN.bam
-├── assemblies/
-    ├── scripts/
-    └── merged/
-├── DE_analysis/
-├── reference/
-    └── Homo_Sapiens/</code></pre>
-<p>You don't need new reference files for every experiment you analyze, but for this example, I'm just going to assume the reference is located in your project directory, so that the paths in the scripts make sense.</p>
-<h3>1: read alignment</h3>
-<p><strong>input</strong>: RNA-seq reads, in FASTQ or FASTA format (extensions <code>.fastq</code>, <code>.fq</code>, <code>.fasta</code>, or <code>.fa</code>). They can be zipped/compressed.<br /><strong>output</strong>: read alignments, in <code>.bam</code> format. (BAM is the compressed form of SAM, i.e. &quot;sequence alignment/map&quot; format, <a href="http://samtools.sourceforge.net/SAMv1.pdf">described here</a>).<br /><strong>task</strong>: determine where on the <em>genome</em> (DNA) each RNA-seq read came from<br /><strong>run how many times:</strong> once for each sample in your experiment<br /><strong>move to step 2 if:</strong> you already have read alignments in .bam format</p>
-<p>TopHat has to be run separately on every sample. For datasets with several samples, I like to run the TopHat jobs in parallel. I also like to use multiple threads/cores to run each job, to improve speed; this is defined by the <code>-p</code> argument to TopHat. So for each sample, I submit a bash script that looks like this (defining some variables before the actual TopHat command so the command isn't totally unreadable):</p>
-<pre class="shell"><code>#!/bin/sh
-
-SAMPLE_ID=1
-TOPHAT_BINARY=/path/to/tophat/executable/tophat
-GENE_REFERENCE=/ProjectName/reference/Homo_sapiens/UCSC/hg19/Annotation/Genes/genes.gtf
-BOWTIE_INDEX=/ProjectName/reference/Homo_sapiens/UCSC/hg19/Sequence/Bowtie2Index/genome
-P=4 #use 4 threads
-
-$TOPHAT_BINARY -G $GENE_REFERENCE -p $P -o /ProjectName/alignments/sample${SAMPLE_ID} $BOWTIE_INDEX /ProjectName/data/sample${SAMPLE_ID}_1.fastq /ProjectName/data/sample${SAMPLE_ID}_2.fastq</code></pre>
-<p>Note that there are <a href="http://ccb.jhu.edu/software/tophat/manual.shtml">a LOT of TopHat parameters you can set</a>. I generally use the defaults for most of them. Above, I specified <code>-G</code> and a path to a <code>genes.gtf</code> file, which means that I first want to align reads to the <em>transcriptome</em> (i.e., known RNA), and <em>then</em> map any remaining unmapped reads back to the <em>genome</em>. (One case where a read would map to the genome but not the transcriptome is if it came from a <a href="http://en.wikipedia.org/wiki/Alternative_splicing">retained intron</a>, so the sequence wouldn't appear in the annotated transcriptome). I also specified <code>-p</code> to tell TopHat to use multiple threads/cores (this is very helpful in terms of speed). The one parameter I didn't set above, but that I do want to mention, is the <code>-r</code> parameter, the mate inner distance -- if you have paired-end reads, you should set the mate inner distance to be the fragment length minus twice the read length (if you don't know what this means, talk to the person who gave you the data). The default is 50.</p>
-<p>I don't really want to make a script by hand for every single sample, nor do I want to manually submit them all with <code>qsub</code>. There could be hundreds of samples in my experiment. To get around this, I create a master shell script, <code>tophat.sh</code>, in the main project directory. The master script creates the sample-specific scripts automatically, using the syntax <code>cat &gt; filename.sh &gt;&gt; EOF</code>, and submits them with <code>qsub</code>. For the experiment outlined here, my <code>tophat.sh</code> file would look like this:</p>
-<pre class="shell"><code>#!/bin/sh
-
-TOPHAT_BINARY=/path/to/tophat/executable/tophat
-GENE_REFERENCE=/ProjectName/reference/Homo_sapiens/UCSC/hg19/Annotation/Genes/genes.gtf
-BOWTIE_INDEX=/ProjectName/reference/Homo_sapiens/UCSC/hg19/Sequence/Bowtie2Index/genome
-P=4 
-
-for SAMPLE_ID in {1..N}
-do
-cat &gt; /ProjectName/alignments/scripts/tophat_${SAMPLE_ID}.sh &lt;&lt;EOF
-$TOPHAT_BINARY -G $GENE_REFERENCE -p $P -o /ProjectName/alignments/sample${SAMPLE_ID} $BOWTIE_INDEX /ProjectName/data/sample${SAMPLE_ID}_1.fastq /ProjectName/data/sample${SAMPLE_ID}_2.fastq
-mv /ProjectName/alignments/sample${SAMPLE_ID}/accepted_hits.bam /ProjectName/alignments/sample${SAMPLE_ID}.bam
-EOF
-
-qsub -l mf=20G,h_vmem=5G -pe local $P -m e -M myemail@email.com /ProjectName/alignments/scripts/tophat_${SAMPLE_ID}.sh
-
-done</code></pre>
-<p>Then, from the <code>ProjectName</code> directory, just execute <code>tophat.sh</code>:</p>
-<pre><code>[afrazee@enigma2 ProjectName]$ sh tophat.sh
-Your job tophat_sample1.sh has been submitted
-Your job tophat_sample2.sh has been submitted
-...
-Your job tophat_sampleN.sh has been submitted </code></pre>
-<p>You'll get an email at <code>myemail@email.com</code> when each job finishes. They'll take a few hours each.</p>
-<p>If you look in the <code>scripts</code> subdirectory of the <code>alignments</code> folder, you can see the sample-specific scripts that the master script created. When your jobs are finished, your project directory will look like this (note that the final alignments end up in the <code>alignments</code> directory due to the <code>mv</code> command at the end of each sample-specific script):</p>
-<pre><code>ProjectName/
-├── tophat.sh
-├── data/
-    ├── sample1_1.fastq
-    ├── sample1_2.fastq
-    ├── sample2_1.fastq
-    ├── sample2_1.fastq
-    ├── ...
-    ├── sampleN_1.fastq
-    └── sampleN_2.fastq
-├── alignments/
-    ├── sample1.bam
-    ├── sample2.bam
-    ├── ...
-    ├── sampleN.bam
-    ├── sample1/
-        └── [...other TopHat output...]
-    ├── sample2/
-        └── [...other TopHat output...]
-    ├── ...
-        └── [...other TopHat output...]
-    ├── sampleN/
-        └── [...other TopHat output...]
-    └── scripts/
-        ├── tophat_sample1.sh
-        ├── tophat_sample1.sh
-        ├── ...
-        └── tophat_sampleN.sh
-├── assemblies/
-    ├── scripts/
-    └── merged/
-├── DE_analysis/
-├── reference/
-    └── Homo_Sapiens/</code></pre>
-<h3>2: transcript assembly</h3>
-<p><strong>input</strong>: read alignments, in <code>.bam</code> format<br /><strong>output</strong>: a transcript assembly, in <a href="http://www.ensembl.org/info/website/upload/gff.html">gtf format</a>. (A GTF file is a plain-text file that specifies locations, strands, and structures of genomic features. Usually there is one row per exon/coding sequence, and the rightmost column specifies which exons belong to which transcripts/genes).<br /><strong>task</strong>: reconstruct the set of RNA transcripts generated by each gene in each sample, based on the RNA-seq reads<br /><strong>run how many times:</strong> once for each sample in your experiment</p>
-<p>After you align RNA-seq reads back to the genome, you are ready to reconstruct the transcripts present in your experiment based on those alignments using Cufflinks. We need to assemble the transcriptomes for each sample separately. The assemblies will be merged (in step 3) to create an overall transcriptome assembly for the experiment. Here, I'm assuming you want to do a totally <em>de novo</em> assembly (i.e., reconstruct the transcripts without using annotation to help). For instructions on doing a guided assembly, and to see the myriad of other options available, <a href="http://cufflinks.cbcb.umd.edu/manual.html">check out the manual</a>.</p>
-<p>I use the same type of script structure for Cufflinks as I do for TopHat (see previous step): write a master script, <code>cufflinks.sh</code>, in the main project directory, which will create and submits sample-specific scripts.</p>
-<p>My master <code>cufflinks.sh</code> script would look like this:</p>
-<pre class="shell"><code>#!/bin/sh
-
-CUFFLINKS_BINARY=/path/to/cufflinks/binary/cufflinks
-P=4 #use 4 threads/cores
-
-for SAMPLE_ID in {1..N}
-do
-cat &gt; /ProjectName/assemblies/scripts/cufflinks_${SAMPLE_ID}.sh &lt;&lt;EOF 
-#!/bin/sh
-
-$CUFFLINKS_BINARY -q -p $P -o /ProjectName/assemblies/sample${SAMPLE_ID} /ProjectName/alignments/sample${SAMPLE_ID}.bam
-
-mv /ProjectName/assemblies/sample${SAMPLE_ID}/transcripts.gtf /ProjectName/assemblies/sample${SAMPLE_ID}_transcripts.gtf
-EOF
-qsub -l mf=20G,h_vmem=5G -m e -M myemail@email.com -pe local $P cufflinks_${SAMPLE_ID}.sh
-done</code></pre>
-<p>The <code>-q</code> option specifies that you want &quot;quiet&quot; output (the non-quiet output is very, very dense), and the <code>-p</code> option again specifies how many cores/threads to use. In my experience, multithreading gives you more of a speedup when you use it with TopHat than with Cufflinks (alignment is more easily parallelized), but it's still worth running Cufflinks on more than 1 core if you can.</p>
-<p>And then from the <code>ProjectName</code> directory, I run:</p>
-<pre><code>[afrazee@enigma2 ProjectName]$ sh cufflinks.sh
-Your job cufflinks_sample1.sh has been submitted
-Your job cufflinks_sample2.sh has been submitted
-...
-Your job cufflinks_sampleN.sh has been submitted </code></pre>
-<p>Again, you'll get an email notification when each sample's assembly is finished. When all the jobs are done, your project directory will now look something like this:</p>
-<pre><code>ProjectName/
-├── tophat.sh
-├── cufflinks.sh
-├── data/
-    ├── [...all data...]
-├── alignments/
-    ├── sample1.bam
-    ├── sample2.bam
-    ├── ...
-    ├── sampleN.bam
-    ├── [...all other TopHat output...]
-    └── scripts/
-        ├── [...all sample-specific TopHat scripts...]
-├── assemblies/
-    ├── sample1_transcripts.gtf
-    ├── sample2_transcripts.gtf
-    ├── ...
-    ├── sampleN_transcripts.gtf
-    ├── sample1/
-        └── [...other Cufflinks output...]
-    ├── sample2/
-        └── [...other Cufflinks output...]
-    ├── ...
-        └── [...other Cufflinks output...]
-    ├── sampleN/
-        └── [...other Cufflinks output...]
-    ├── scripts/
-        ├── cufflinks_sample1.sh
-        ├── cufflinks_sample2.sh
-        ├── ...
-        └── cufflinks_sampleN.sh
-    └── merged/
-├── DE_analysis/
-├── reference/
-    └── Homo_Sapiens/</code></pre>
-<p>And the assembly step is done!</p>
-<h3>3: merge the sample-specific assemblies</h3>
-<p><strong>input</strong>: the sample-specific assemblies, in <code>.gtf</code> format<br /><strong>output</strong>: one merged assembly for the entire experiment, in <code>.gtf</code> format.<br /><strong>task</strong>: intelligently combine the sample-specific assemblies into one main transcriptome, which will represent our estimate of the transcript structure present in this particular experiment. Statistical analysis will be performed on the merged assembly.<br /><strong>run how many times:</strong> once for the entire project</p>
-<p>Compared to the other steps, this one is pretty short!</p>
-<h4>make a text file containing paths to all the sample-specific assemblies</h4>
-<p>I always call this file <code>assemblies.txt</code> and stick it in the <code>assemblies</code> subdirectory. For this project, the <code>assemblies.txt</code> file would look like this:</p>
-<pre><code>/ProjectName/assemblies/sample1_transcripts.gtf
-/ProjectName/assemblies/sample2_transcripts.gtf
-...
-/ProjectName/assemblies/sampleN_transcripts.gtf</code></pre>
-<p>List each file out explicitly - the ... is just for illustrative purposes here :)</p>
-<h4>submit a cuffmerge script</h4>
-<p>Once you make <code>assemblies.txt</code>, you just need to run <code>cuffmerge</code> on that assembly list, with a few other parameters. You'll use a file from your reference. Here is my <code>cuffmerge.sh</code> script, which I put in the main project directory:</p>
-<pre class="shell"><code>#!/bin/sh
-#$ -cwd -l mf=20G,h_vmem=5G -pe local 4 -m e -M myemail@email.com
-
-REFERENCE_SEQ=/ProjectName/reference/Homo_sapiens/UCSC/hg19/Sequence/Bowtie2Index/genome.fa
-CUFFMERGE_BINARY=/path/to/cuffmerge/binary/cuffmerge
-P=4
-
-$CUFFMERGE_BINARY -s $REFERENCE_SEQ -p $P -o /ProjectName/assemblies/merged /ProjectName/assemblies/assemblies.txt</code></pre>
-<p>Then I just do:</p>
-<pre class="shell"><code>[afrazee@enigma2 ProjectName]$ qsub cuffmerge.sh
-Your job &quot;cuffmerge.sh&quot; has been submitted</code></pre>
-<p>A fun trick: when you have a line in a bash script prefixed with <code>#$</code>, qsub will parse all its arguments from there. So, the second line in the <code>cuffmerge.sh</code> script takes care of all my memory requests and whatnot, so I don't have to worry about it when I actually run my <code>qsub</code> command.</p>
-<p>The output, <code>merged.gtf</code>, will be written to the <code>merged</code> folder specified by <code>-o</code>. Again, there are several other options, including one to do a guided merge (merge the assembled transcripts with annotated transcripts), detailed in the <a href="http://cufflinks.cbcb.umd.edu/manual.html">manual</a> -- but this is my general template.</p>
-<p>The project directory now looks like:</p>
-<pre><code>ProjectName/
-├── tophat.sh
-├── cufflinks.sh
-├── cuffmerge.sh
-├── data/
-    ├── [...all data...]
-├── alignments/
-    ├── sample1.bam
-    ├── sample2.bam
-    ├── ...
-    ├── sampleN.bam
-    ├── [...all other TopHat output...]
-    └── scripts/
-        ├── [...all sample-specific TopHat scripts...]
-├── assemblies/
-    ├── sample1_transcripts.gtf
-    ├── sample2_transcripts.gtf
-    ├── ...
-    ├── sampleN_transcripts.gtf
-    ├── [...all other Cufflinks output...]
-    ├── scripts/
-        ├── [...all sample-specific Cufflinks scripts...]
-    └── merged/
-        ├── merged.gtf
-        └── logs/
-├── DE_analysis/
-├── reference/
-    └── Homo_Sapiens/</code></pre>
-<h3>4: profit</h3>
-<p>Congratulations! You now have a transcriptome assembly (<code>merged.gtf</code>) for your experiment, so you can do differential expression analysis (I mean, we already made a <code>DE_analysis</code> folder...it's just sitting there, waiting to be filled with statistics!). Or you can visualize your assembly. Or you can discover new isoforms. Or any number of other awesome things! The world of transcript analysis is your oyster. Have fun :)</p>
-Date this protocol was last modified: 2015-06-22 15:35:56.
+<h1>References</h1>
+<p>Citations made with <code>knitcitations</code> <a id='cite-knitcitations'></a>(<a href='http://CRAN.R-project.org/package=knitcitations'>Boettiger, 2015</a>).</p>
+<div class="row">
+<p>
+<a id='bib-knitcitations'></a><a href="#cite-knitcitations">[1]</a><cite> C. Boettiger. <em>knitcitations: Citations for Knitr Markdown Files</em>. R package version 1.0.6. 2015. URL: <a href="http://CRAN.R-project.org/package=knitcitations">http://CRAN.R-project.org/package=knitcitations</a>.</cite>
+</p>
+</div>
+<p><code>R</code> information (delete this if no <code>R</code> code was used)</p>
+<div class="row">
+<button class="message R toggle btn btn-xs btn-info">
+<span class="glyphicon glyphicon-chevron-down"></span> R message
+</button>
+<pre style=""><code class="message r">## Session info -----------------------------------------------------------------------------------------------------------
+</code></pre>
+<button class="output R toggle btn btn-xs btn-success">
+<span class="glyphicon glyphicon-chevron-down"></span> R output
+</button>
+<pre style=""><code class="output r">##  setting  value                                      
+##  version  R version 3.2.0 Patched (2015-05-18 r68382)
+##  system   x86_64, darwin10.8.0                       
+##  ui       AQUA                                       
+##  language (EN)                                       
+##  collate  en_US.UTF-8                                
+##  tz       America/New_York
+</code></pre>
+<button class="message R toggle btn btn-xs btn-info">
+<span class="glyphicon glyphicon-chevron-down"></span> R message
+</button>
+<pre style=""><code class="message r">## Packages ---------------------------------------------------------------------------------------------------------------
+</code></pre>
+<button class="output R toggle btn btn-xs btn-success">
+<span class="glyphicon glyphicon-chevron-down"></span> R output
+</button>
+<pre style=""><code class="output r">##  package        * version  date       source                                   
+##  bibtex           0.4.0    2014-12-31 CRAN (R 3.2.0)                           
+##  bitops           1.0-6    2013-08-17 CRAN (R 3.2.0)                           
+##  curl             0.8      2015-06-06 CRAN (R 3.2.0)                           
+##  devtools       * 1.8.0    2015-05-09 CRAN (R 3.2.0)                           
+##  digest           0.6.8    2014-12-31 CRAN (R 3.2.0)                           
+##  evaluate         0.7      2015-04-21 CRAN (R 3.2.0)                           
+##  formatR          1.2      2015-04-21 CRAN (R 3.2.0)                           
+##  git2r            0.10.1   2015-05-07 CRAN (R 3.2.0)                           
+##  htmltools        0.2.6    2014-09-08 CRAN (R 3.2.0)                           
+##  httr             0.6.1    2015-01-01 CRAN (R 3.2.0)                           
+##  knitcitations  * 1.0.6    2015-05-26 CRAN (R 3.2.0)                           
+##  knitr            1.10.5   2015-05-06 CRAN (R 3.2.0)                           
+##  knitrBootstrap   1.0.0    2015-06-09 Github (jimhester/knitrBootstrap@76c41f0)
+##  lubridate        1.3.3    2013-12-31 CRAN (R 3.2.0)                           
+##  magrittr         1.5      2014-11-22 CRAN (R 3.2.0)                           
+##  markdown         0.7.7    2015-04-22 CRAN (R 3.2.0)                           
+##  memoise          0.2.1    2014-04-22 CRAN (R 3.2.0)                           
+##  plyr             1.8.3    2015-06-12 CRAN (R 3.2.0)                           
+##  Rcpp             0.11.6   2015-05-01 CRAN (R 3.2.0)                           
+##  RCurl            1.95-4.6 2015-04-24 CRAN (R 3.2.0)                           
+##  RefManageR       0.8.63   2015-06-09 CRAN (R 3.2.0)                           
+##  RJSONIO          1.3-0    2014-07-28 CRAN (R 3.2.0)                           
+##  rmarkdown      * 0.7      2015-06-13 CRAN (R 3.2.0)                           
+##  rversions        1.0.1    2015-06-06 CRAN (R 3.2.0)                           
+##  stringi          0.4-1    2014-12-14 CRAN (R 3.2.0)                           
+##  stringr          1.0.0    2015-04-30 CRAN (R 3.2.0)                           
+##  XML              3.98-1.2 2015-05-31 CRAN (R 3.2.0)                           
+##  xml2             0.1.1    2015-06-02 CRAN (R 3.2.0)                           
+##  yaml             2.1.13   2014-06-12 CRAN (R 3.2.0)
+</code></pre>
+</div>
+Date this protocol was last modified: 2015-06-22 15:32:07.
 </div>
 </div>
 <div class="navbar navbar-fixed-bottom navbar-inverse">
@@ -1138,6 +958,37 @@ Date this protocol was last modified: 2015-06-22 15:35:56.
 <p class="navbar-text">
 Toggle
 </p>
+</li>
+<li class="dropup">
+<a href="#" class="dropdown-toggle" data-toggle="dropdown">Code <b class="caret"></b></a>
+<ul class="dropdown-menu">
+<li class="dropdown-header">
+Languages
+</li>
+<li class="active">
+<a href="#" class="toggle-global source R" type="source.R">R</a>
+</li>
+<li>
+<a href="#" type="all-source" class="toggle-global">All</a>
+</li>
+</ul>
+</li>
+<li class="dropup">
+<a href="#" class="dropdown-toggle" data-toggle="dropdown">Output <b class="caret"></b></a>
+<ul class="dropdown-menu">
+<li class="dropdown-header">
+Type
+</li>
+<li class="active">
+<a href="#" class="toggle-global message" type="message">message</a>
+</li>
+<li class="active">
+<a href="#" class="toggle-global output" type="output">output</a>
+</li>
+<li>
+<a href="#" type="all-output" class="toggle-global">All</a>
+</li>
+</ul>
 </li>
 <li class="active">
 <a href="#" type="figure" class="toggle-global">Figures</a>

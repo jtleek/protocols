@@ -61,17 +61,131 @@ img {
 
 
 
-<div id="protocols" class="section level1">
-<h1>protocols</h1>
-<p>Here you can find a set of lab analysis protocols.</p>
+<div id="how-to-submit-a-new-protocol" class="section level1">
+<h1>How to submit a new protocol</h1>
+<p>This protocol template was contributed by <a href="http://bit.ly/LColladoTorres">L. Collado-Torres</a>.</p>
+</div>
+<div id="overview" class="section level1">
+<h1>Overview</h1>
+<p>At <a href="https://github.com/leekgroup">Leek group</a> we have a diverse group of members with expertise in different areas. To make it easier for others in the group to accomplish some recurrent tasks, <a href="http://jtleek.com/">Jeff</a> loves it when members of the group write a short protocol for others to follow. This document is a short guide on how to submit a new protocol.</p>
+</div>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>The first thing you should know is that this website is version controlled by <a href="https://git-scm.com/">git</a> and hosted at <a href="https://github.com/">GitHub</a>. Learning how to use git is a bit outside the scope of this protocol. However, to start</p>
 <ul>
-<li><a href="tophat_cufflinks/">Analyzing RNA-seq data with the “Tuxedo” tools</a></li>
-<li><a href="travis_bioc_devel/">Routinely testing your R package with Travis</a></li>
-<li><a href="submit_protocol/">How to submit a new protocol</a></li>
-<li><a href="leekgroup_repo/">Repositories at <code>leekgroup</code></a></li>
+<li>Check the <a href="https://git-scm.com/documentation">git documentation</a>, just the basics is enough,</li>
+<li><a href="https://git-scm.com/downloads">download git</a> and maybe a <a href="https://git-scm.com/downloads/guis">GUI client</a>. Most of the people I know either use the GitHub GUI for Mac (or Windows) or <a href="https://www.sourcetreeapp.com/">SourceTree</a>. I normally use the terminal or SourceTree.</li>
 </ul>
-<p>If you are a member at Leek group and want to contribute a template, please check <a href="submit_protocol/">how to submit a new protocol</a>. Basically, fork the repository, copy <a href="protocol_template/">protocol template</a> to a new directory, modify it to your liking, update this page, and submit a pull request.</p>
-<p>Date this page was last modified: 2015-06-22 18:23:52.</p>
+<p>GitHub is pretty cool because it automatically serves HTML documents that are in a <code>gh-pages</code> branch. <a href="https://pages.github.com/">GitHub Pages</a> shows how to create one such website from scratch. In this case, we have already created the <a href="https://github.com/jtleek/protocols">protocols</a> repository and its main branch is <code>gh-pages</code>. That means, that all HTML files in the repository can be seen live at <a href="http://jtleek.com/protocols/">jtleek.com/protocols</a>.</p>
+<p>We organize the protocols by creating a new directory for each protocol and including a <code>index.html</code> inside of them. For example, we have a protocol about testing packages with Travis which lives at <a href="https://github.com/jtleek/protocols/blob/gh-pages/travis_bioc_devel/index.html">protocols/travis_bioc_devel/index.html</a> and can be seen at <a href="http://jtleek.com/protocols/travis_bioc_devel/">jtleek.com/protocols/travis_bioc_devel/</a>.</p>
+<p>In order to create the HTML files without much work from our side, we use <a href="http://rmarkdown.rstudio.com/">R Markdown</a> via the <code>rmarkdown</code> package <a id="cite-rmarkdown"></a>(<a href="http://CRAN.R-project.org/package=rmarkdown">Allaire, Cheng, Xie, McPherson, et al., 2015</a>). You might want to check <a href="www.aejaffe.com/summerR_2015/modules/module12.html">this short presentation</a> I made covering the basics of R Markdown. R Markdown uses <a href="http://daringfireball.net/projects/markdown/syntax">Markdown syntax</a> (see basics <a href="http://rmarkdown.rstudio.com/authoring_basics.html">here</a>) and allows you to embed R code with its results. Another cool feature, is that R Markdown uses <a href="http://pandoc.org/">Pandoc</a> behind the scenes which takes Markdown files and creates HTMLs, PDFs, Word documents, etc. What we care about in this case are the HTML files.</p>
+</div>
+<div id="instructions" class="section level1">
+<h1>Instructions</h1>
+<p>Know what we have covered the basics, lets gets started.</p>
+<ul>
+<li>Create a GitHub account if you don’t have already done so. If you already have one, log in.</li>
+<li>Fork the <a href="https://github.com/jtleek/protocols">protocols</a> repository. You will see the <em>fork</em> button at the top right.</li>
+<li>Clone your fork into your computer.</li>
+<li>Open the <code>protocols</code> folder.</li>
+<li>Copy the <code>protocol_template</code> directory and rename it. Lets say you called it <code>my_protocol</code>.</li>
+<li>Open <code>my_protocol/index.Rmd</code>.</li>
+<li>Edit <code>my_protocol/index.Rmd</code>. You will see some instructions there.</li>
+<li>Once you are done editing <code>my_protocol/index.Rmd</code>, open <code>render.R</code>.</li>
+<li>Install the appropriate packages if you don’t have them already.</li>
+<li>Use <code>rmarkdown::render(&quot;my_protocol/index.Rmd&quot;)</code> to create the file <code>my_protocol/index.html</code>, assuming that you opened <code>R</code> at <code>protocols/</code>.</li>
+<li>Open the main index file (<code>protocols/index.Rmd</code>) and add a link to your protocol.</li>
+<li>Render the main index file using <code>rmarkdown::render(&quot;index.Rmd&quot;)</code>, assuming that you opened <code>R</code> at <code>protocols/</code>.</li>
+<li>Either via your Git GUI or via terminal, <em>add</em> (“git add”) the files
+<ul>
+<li><code>my_protocol/index.Rmd</code></li>
+<li><code>my_protocol/index.Rmd</code></li>
+<li><code>index.Rmd</code></li>
+<li><code>index.html</code></li>
+</ul></li>
+<li>Either via your Git GUI or via terminal, make a commit message describing the changes you introduced (“git commit”).</li>
+<li>Push your changes to your fork (“git push”).</li>
+<li>You might want to check that your new protocol looks like how you wanted it to look. Open <code>http://yourGithub.github.io/protocols/my_procotol/</code>. For example, <a href="http://lcolladotor.github.io/protocols/travis_bioc_devel/">Travis protocol at lcolladotor</a>.</li>
+<li>Open the GitHub website at your fork <code>https://github.com/yourGithub/protocols</code>. For example, here is <a href="https://github.com/lcolladotor/protocols">my fork</a>.</li>
+<li>Click on “pull request” on the right side, which should take you to <code>https://github.com/yourGithub/protocols/pulls</code>. For example, here is <a href="https://github.com/lcolladotor/protocols/pulls">mine</a>.</li>
+<li>Click on “new pull request”. You should be <em>comparing changes</em> between <code>jtleek/protocols</code> at the <code>gh-pages</code> branch and <code>yourGitHub/protocols</code> at the <code>gh-pages</code> branch.</li>
+<li>Click on “create pull request”.</li>
+<li>Use a short title and properly describe the changes.</li>
+<li>Again, click on “create pull request”.</li>
+<li><a href="http://jtleek.com/">Jeff</a> will then accept your pull request.</li>
+<li>Give yourself a high five!</li>
+</ul>
+<p>For more information about pull requests, check <a href="https://help.github.com/articles/creating-a-pull-request/">creating a pull request</a>.</p>
+<p>You might be interested in exploring how some of the other protocols were made before contributing yours.</p>
+<div id="code" class="section level2">
+<h2>Code</h2>
+<p>Here is some code, assuming that you have created the fork and are under Linux or Mac OS.</p>
+<pre class="bash"><code>## Enter your favorit directory
+$ cd my_code_directory
+
+## Cloene your fork (ssh, there's also https if you want)
+$ git clone git@github.com:yourGithub/protocols.git
+
+## Enter the main directory
+$ cd protocols
+
+## Copy the template directory and rename it
+$ cp -R protocol_template my_protocol
+
+## Open the protocol index file and edit it
+$ open my_protocol/index.Rmd
+## Edit the file, then save it
+
+## Render the html version, if you have the packages installed
+$ Rscript -e &quot;rmarkdown::render('my_procotol/index.Rmd')&quot;
+
+## Open the main index and add a link to your protocol
+$ open index.Rmd
+## Once you added the link, save the file.
+
+## Render the html version of the main index.
+$ Rscript -e &quot;rmardown::render('index.Rmd')&quot;
+
+## Add all the files
+$ git add index.Rmd index.html my_protocol/*
+
+## Make the commit and describe the new protocol
+$ git ci -am &quot;Contributing a new protocol about abcdefg&quot;
+
+## Push them to your fork
+$ git push
+
+## Complete the pull request at Github.com</code></pre>
+</div>
+<div id="more-than-one" class="section level2">
+<h2>More than one</h2>
+<p>Note that if your pull request got accepted and some days/weeks/months/years later you want to submit a second protocol, you will need to sync your fork with the main repository before making changes. Follow the instruction at <a href="https://help.github.com/articles/syncing-a-fork/">syncing a fork</a>.</p>
+</div>
+<div id="some-details" class="section level2">
+<h2>Some details</h2>
+<p>The file <code>protocols/procotol_template/index.Rmd</code> suggests using</p>
+<ul>
+<li><a href="http://cran.r-project.org/web/packages/devtools/index.html">devtools</a> <a id="cite-devtools"></a>(<a href="http://CRAN.R-project.org/package=devtools">Wickham and Chang, 2015</a>) for the session information. It’s the most precise one when you have installed GitHub packages.</li>
+<li><a href="http://cran.r-project.org/web/packages/knitcitations/index.html">knitcitations</a> <a id="cite-knitcitations"></a>(<a href="http://CRAN.R-project.org/package=knitcitations">Boettiger, 2015</a>) for creating citations and the corresponding bibliography.</li>
+<li><a href="https://github.com/jimhester/knitrBootstrap">knitrBootstrap</a> <a id="cite-knitrBootstrap"></a>(<a href="https://github.com/jimhester/">Hester, 2014</a>) for formatting the HTML file. It’s specially useful if your protocol includes R code. However, at the time of writing this protocol, the best version is only available at GitHub. You can install it via <code>devtools::install_github('jimhester/knitrBootstrap')</code>.</li>
+</ul>
+</div>
+</div>
+<div id="references" class="section level1">
+<h1>References</h1>
+<p>
+<a id="bib-rmarkdown"></a><a href="#cite-rmarkdown">[1]</a><cite> J. Allaire, J. Cheng, Y. Xie, J. McPherson, et al. <em>rmarkdown: Dynamic Documents for R</em>. R package version 0.7. 2015. URL: <a href="http://CRAN.R-project.org/package=rmarkdown">http://CRAN.R-project.org/package=rmarkdown</a>.</cite>
+</p>
+<p>
+<a id="bib-knitcitations"></a><a href="#cite-knitcitations">[2]</a><cite> C. Boettiger. <em>knitcitations: Citations for Knitr Markdown Files</em>. R package version 1.0.6. 2015. URL: <a href="http://CRAN.R-project.org/package=knitcitations">http://CRAN.R-project.org/package=knitcitations</a>.</cite>
+</p>
+<p>
+<a id="bib-knitrBootstrap"></a><a href="#cite-knitrBootstrap">[3]</a><cite> J. Hester. <em>knitrBootstrap: Knitr Bootstrap framework.</em> R package version 1.0.0. 2014. URL: <a href="https://github.com/jimhester/">https://github.com/jimhester/</a>.</cite>
+</p>
+<p>
+<a id="bib-devtools"></a><a href="#cite-devtools">[4]</a><cite> H. Wickham and W. Chang. <em>devtools: Tools to Make Developing R Packages Easier</em>. R package version 1.8.0. 2015. URL: <a href="http://CRAN.R-project.org/package=devtools">http://CRAN.R-project.org/package=devtools</a>.</cite>
+</p>
+<p>Date this protocol was last modified: 2015-06-22 16:59:20.</p>
 </div>
 
 

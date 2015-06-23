@@ -1,11 +1,11 @@
 ---
 output:
+  html_document:
+    toc: false
+    theme: spacelab
   knitrBootstrap::bootstrap_document:
     theme.chooser: TRUE
     highlight.chooser: TRUE
-  html_document:
-    toc: true
-    theme: united
 ---
 
 protocols
@@ -15,3 +15,12 @@ Here you can find a set of lab analysis protocols.
 
 * [Analyzing RNA-seq data with the "Tuxedo" tools](tophat_cufflinks/)
 * [Routinely testing your R package with Travis](travis_bioc_devel/)
+* [How to submit a new protocol](submit_protocol/)
+* [Repositories at `leekgroup`](leekgroup_repo/)
+
+
+
+If you are a member at Leek group and want to contribute a template, please check [how to submit a new protocol](submit_protocol/). Basically, fork the repository, copy [protocol template](protocol_template/) to a new directory, modify it to your liking, update this page, and submit a pull request.
+
+
+Date this page was last modified: `r Sys.time()`.
