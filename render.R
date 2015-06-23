@@ -11,10 +11,10 @@ library('rmarkdown')
 ## the file "render.R" is located at. If you need to change your working
 ## directory use the functions getwd() and setwd().
 
+## Use code like this to render a specific file
+render("./protocol_template/index.Rmd")
+
 ## This code renders the index.Rmd files for all protocols, which you might
 ## not want to do.
 files <- dir(pattern = 'index.Rmd', full.names = TRUE, include.dirs = TRUE, recursive = TRUE)
 sapply(files, render)
-
-## Instead, use code like this to render a specific file
-render("./protocol_template/index.Rmd")

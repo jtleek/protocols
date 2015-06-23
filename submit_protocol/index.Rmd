@@ -117,7 +117,7 @@ $ open index.Rmd
 ## Once you added the link, save the file.
 
 ## Render the html version of the main index.
-$ Rscript -e "rmardown::render('index.Rmd')"
+$ Rscript -e "rmarkdown::render('index.Rmd')"
 
 ## Add all the files
 $ git add index.Rmd index.html my_protocol/*
