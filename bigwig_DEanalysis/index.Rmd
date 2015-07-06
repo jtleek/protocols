@@ -36,7 +36,7 @@ bib <- read.bibtex('protocolTemplate.bib')
 names(bib) <- names(bibs)
 ```
 
-This protocol template was contributed by [L. Collado-Torres](http://bit.ly/LColladoTorres) as is available at [jtleek.com/protocols/](http://jtleek.com/protocols/).
+This protocol was contributed by [L. Collado-Torres](http://bit.ly/LColladoTorres) as is available at [jtleek.com/protocols/](http://jtleek.com/protocols/).
 
 
 # Overview
@@ -51,7 +51,7 @@ Frequently researchers are interested in differential expression analyses when w
 
 Going into more detail, the sequence reads mapped to the genome are stored in sequence alignment files, most commonly in [BAM](http://genome.ucsc.edu/goldenpath/help/bam.html) format. This format stores information which can be useful for other workflows. However, for differential expression analyses, the information in BAM files can be significantly compressed by storing just the coverage information. That is, the number of reads overlapping each base of the genome. BigWig files can efficiently store the coverage information. Inside R, the `rtracklayer` `r citep(bib[['rtracklayer']])` allows users to read data from BigWig files, and with some code, we can construct the count matrix.
 
-This protocol exemplifies some code for creating such a matrix using example BigWig files available in `derfinderData` `r citep(bib[['derfinderData']])` which contain data from the `BrainSpan` project `r citep(bib[['brainspan']])`. 
+This protocol exemplifies some code for creating such a matrix using example BigWig files available in `derfinderData` `r citep(bib[['derfinderData']])` which contains data from the `BrainSpan` project `r citep(bib[['brainspan']])`. 
 
 # Example
 

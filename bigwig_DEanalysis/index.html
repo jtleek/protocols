@@ -866,13 +866,13 @@
 <div class="row row-offcanvas row-offcanvas-right">
 <div class="contents col-xs-12 col-md-10">
 <h1>BigWigs to count matrix</h1>
-<p>This protocol template was contributed by <a href="http://bit.ly/LColladoTorres">L. Collado-Torres</a> as is available at <a href="http://jtleek.com/protocols/">jtleek.com/protocols/</a>.</p>
+<p>This protocol was contributed by <a href="http://bit.ly/LColladoTorres">L. Collado-Torres</a> as is available at <a href="http://jtleek.com/protocols/">jtleek.com/protocols/</a>.</p>
 <h1>Overview</h1>
 <p>This protocol explains how to create a feature count matrix from coverage data stored in <a href="http://genome.ucsc.edu/goldenpath/help/bigWig.html">BigWig</a> files. This feature count matrix can then be used for differential expression analyses using packages such as <code>DESeq2</code> , <code>edgeR-robust</code> <a id='cite-edgeR'></a>(<a href='#bib-edgeR'>Zhou, Lindsay, and Robinson, 2014</a>), <code>limma</code> <a id='cite-limma'></a>(<a href='#bib-limma'>Ritchie, Phipson, Wu, Hu, et al., 2015</a>), or <code>derfinder-2014</code> <a id='cite-derOriginal'></a>(<a href='http://biostatistics.oxfordjournals.org/content/15/3/413.long'>Frazee, Sabunciyan, Hansen, Irizarry, et al., 2014</a>).</p>
 <h1>Introduction</h1>
 <p>Frequently researchers are interested in differential expression analyses when working with RNA-seq data. Doing so involves aligning the sequence reads to the reference genome/transcriptome to identify which features (exons, genes) were expressed. Commonly, a features count matrix is created with one row per feature and one column per sample. The number in each cell of the matrix corresponds to the number of reads overlapping the feature in question for the given sample.</p>
 <p>Going into more detail, the sequence reads mapped to the genome are stored in sequence alignment files, most commonly in <a href="http://genome.ucsc.edu/goldenpath/help/bam.html">BAM</a> format. This format stores information which can be useful for other workflows. However, for differential expression analyses, the information in BAM files can be significantly compressed by storing just the coverage information. That is, the number of reads overlapping each base of the genome. BigWig files can efficiently store the coverage information. Inside R, the <code>rtracklayer</code> <a id='cite-rtracklayer'></a>(<a href='http://bioinformatics.oxfordjournals.org/content/25/14/1841.abstract'>Lawrence, Gentleman, and Carey, 2009</a>) allows users to read data from BigWig files, and with some code, we can construct the count matrix.</p>
-<p>This protocol exemplifies some code for creating such a matrix using example BigWig files available in <code>derfinderData</code> <a id='cite-derfinderData'></a>(<a href='https://github.com/lcolladotor/derfinderData'>Collado-Torres, Jaffe, and Leek, 2015</a>) which contain data from the <code>BrainSpan</code> project <a id='cite-brainspan'></a>(<a href='http://developinghumanbrain.org'>BrainSpan, 2011</a>).</p>
+<p>This protocol exemplifies some code for creating such a matrix using example BigWig files available in <code>derfinderData</code> <a id='cite-derfinderData'></a>(<a href='https://github.com/lcolladotor/derfinderData'>Collado-Torres, Jaffe, and Leek, 2015</a>) which contains data from the <code>BrainSpan</code> project <a id='cite-brainspan'></a>(<a href='http://developinghumanbrain.org'>BrainSpan, 2011</a>).</p>
 <h1>Example</h1>
 <p>First, lets locate a set of BigWig files from the amygdala.</p>
 <div class="row">
@@ -1339,7 +1339,7 @@ sum(deseq$padj < 0.05, na.rm = TRUE)</code></pre>
 ##  zlibbioc               1.15.0      2015-04-17 Bioconductor
 </code></pre>
 </div>
-Date this protocol was last modified: 2015-07-06 02:10:31.
+Date this protocol was last modified: 2015-07-06 02:21:32.
 </div>
 </div>
 <div class="navbar navbar-fixed-bottom navbar-inverse">
