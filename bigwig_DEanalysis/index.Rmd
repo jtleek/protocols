@@ -1,0 +1,162 @@
+---
+output:
+  knitrBootstrap::bootstrap_document:
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
+  html_document:
+    toc: true
+    theme: spacelab
+  pdf_document:
+    toc: true
+---
+
+BigWigs to count matrix
+=======================
+
+
+```{r bibsetup, echo=FALSE, message=FALSE, warning=FALSE}
+## Load knitcitations with a clean bibliography
+library('knitcitations')
+cleanbib()
+cite_options(hyperlink = 'to.doc', citation_format = 'text', style = 'html')
+
+bibs <- c('knitcitations' = citation('knitcitations'),
+    'deseq2' = citation('DESeq2'),
+    'edgeR' = citation('edgeR')[5],
+    'limma' = citation('limma')[1],
+    'rtracklayer' = citation('rtracklayer'),
+    'derfinderData' = citation('derfinderData'),
+    'derfinder' = citation('derfinder')[1],
+    'derOriginal' = citation('derfinder')[2],
+    brainspan = RefManageR::BibEntry(bibtype = 'Unpublished', key = 'brainspan', title = 'Atlas of the Developing Human Brain [Internet]. Funded by ARRA Awards 1RC2MH089921-01, 1RC2MH090047-01, and 1RC2MH089929-01.', author = 'BrainSpan', year = 2011, url = 'http://developinghumanbrain.org'),
+    R = citation()
+)
+write.bibtex(bibs, file = 'protocolTemplate.bib')
+bib <- read.bibtex('protocolTemplate.bib')
+names(bib) <- names(bibs)
+```
+
+This protocol template was contributed by [L. Collado-Torres](http://bit.ly/LColladoTorres) as is available at [jtleek.com/protocols/](http://jtleek.com/protocols/).
+
+
+# Overview
+
+
+This protocol explains how to create a feature count matrix from coverage data stored in [BigWig](http://genome.ucsc.edu/goldenpath/help/bigWig.html) files. This feature count matrix can then be used for differential expression analyses using packages such as `DESeq2` `r citep(bib[['DESeq2']])`, `edgeR-robust` `r citep(bib[['edgeR']])`, `limma` `r citep(bib[['limma']])`, or `derfinder-2014` `r citep(bib[['derOriginal']])`.
+
+
+# Introduction
+
+Frequently researchers are interested in differential expression analyses when working with RNA-seq data. Doing so involves aligning the sequence reads to the reference genome/transcriptome to identify which features (exons, genes) were expressed. Commonly, a features count matrix is created with one row per feature and one column per sample. The number in each cell of the matrix corresponds to the number of reads overlapping the feature in question for the given sample.
+
+Going into more detail, the sequence reads mapped to the genome are stored in sequence alignment files, most commonly in [BAM](http://genome.ucsc.edu/goldenpath/help/bam.html) format. This format stores information which can be useful for other workflows. However, for differential expression analyses, the information in BAM files can be significantly compressed by storing just the coverage information. That is, the number of reads overlapping each base of the genome. BigWig files can efficiently store the coverage information. Inside R, the `rtracklayer` `r citep(bib[['rtracklayer']])` allows users to read data from BigWig files, and with some code, we can construct the count matrix.
+
+This protocol exemplifies some code for creating such a matrix using example BigWig files available in `derfinderData` `r citep(bib[['derfinderData']])` which contain data from the `BrainSpan` project `r citep(bib[['brainspan']])`. 
+
+# Example
+
+First, lets locate a set of BigWig files from the amygdala. 
+
+```{r 'findFiles'}
+## Load data
+library('derfinderData')
+
+## Locate bigWig files
+files <- dir(system.file('extdata', 'AMY', package = 'derfinderData'),  full.names = TRUE)
+names(files) <- gsub('\\.bw', '', dir(system.file('extdata', 'AMY', package = 'derfinderData')))
+head(files)
+```
+
+Next, we need to have a `GRanges` object with the features we are interested in. Normally, that would be all the exons or genes of a given organism. However, in this example we will only use the exons for chromosome 21 of the human genome (version hg19). That information is conveniently stored in `derfinder` `r citep(bib[['derfinder']])`.
+
+```{r 'exons', bootstrap.show.warning = FALSE}
+## Find exons
+library('derfinder')
+exons <- genomicState$fullGenome[genomicState$fullGenome$theRegion == 'exon']
+exons
+```
+
+Now, using `rtracklayer` we can import the coverage data into our R session and create the count matrix.
+
+```{r 'countMatrix', bootstrap.show.warning = FALSE, bootstrap.show.message = FALSE}
+## Import data and create count matrix
+library('rtracklayer')
+bw <- BigWigFileList(files)
+counts <- matrix(NA, nrow = length(exons), ncol = length(bw))
+colnames(counts) <- names(bw)
+for(i in seq_len(length(bw))) {
+    coverage <- import(bw[[i]], as = 'RleList')$chr21
+    counts[, i] <- sum(Views(coverage, ranges(exons)))
+}
+## Divide by read length and round to integer numbers
+counts <- round(counts / 76, 0)
+
+## Explore a little portion of the count matrix 
+dim(counts)
+counts[2653:2658, 1:6]
+```
+
+Note that `derfinder` has functions for performing the above operation in parallel for a large set of files and/or chromosomes.
+
+
+Once we have created the count matrix, we can proceed to use the differential expression analysis tool of our choice. In this example we'll use `DESeq2` to find differentially expressed exons between the adult and fetal samples. The phenotypic information is stored in `derfinderData` and once we extract it, we can use the `DESeqDataSetFromMatrix()` function to create the type of object `DESeq2` uses. Once we have that object, we can perform the differential expression analysis and continue from there. Please check the documentation for `DESeq2` for more information.
+
+```{r 'deseq2'}
+## Get pheno table
+pheno <- subset(brainspanPheno, structure_acronym == 'AMY')
+
+## Perform DESeq2 analysis
+library('DESeq2')
+
+## Round matrix and specify design
+dse <- DESeqDataSetFromMatrix(counts, data.frame(group = pheno$group), ~ group)
+
+## Perform DE analysis
+dse <- DESeq(dse, test = 'LRT', reduced = ~ 1)
+
+## Extract results
+deseq <- exons
+mcols(deseq) <- cbind(mcols(deseq), results(dse))
+
+## Explore results
+deseq
+
+## How many have significant p-values?
+sum(deseq$pvalue < 0.05, na.rm = TRUE)
+
+## How many have significant FDR adjusted p-values?
+sum(deseq$padj < 0.05, na.rm = TRUE)
+```
+
+From here, you can proceed to use other Bioconductor packages for different downstream analyses.
+
+
+
+
+# References
+
+
+
+Citations made with `knitcitations` `r citep(bib[['knitcitations']])`.
+
+
+```{r 'bibliography', results='asis', echo=FALSE, cache=FALSE}
+## Print bibliography
+bibliography()
+```
+
+```{r 'cleanupBib', echo = FALSE, results = 'hide'}
+## Clean up
+file.remove('protocolTemplate.bib')
+```
+
+`R` session information
+
+```{r 'rSession', echo = FALSE}
+library('devtools')
+options(width = 120)
+session_info()
+```
+
+
+Date this protocol was last modified: `r Sys.time()`.
