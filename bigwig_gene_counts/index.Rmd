@@ -1,0 +1,154 @@
+---
+output:
+  knitrBootstrap::bootstrap_document:
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
+  html_document:
+    toc: false
+    theme: spacelab
+---
+
+
+Gene counting from BigWig files
+===============================
+
+```{r bibsetup, echo=FALSE, message=FALSE, warning=FALSE}
+## Load knitcitations with a clean bibliography
+library('knitcitations')
+cleanbib()
+cite_options(hyperlink = 'to.doc', citation_format = 'text', style = 'html')
+
+bibs <- c('knitcitations' = citation('knitcitations'),
+    'rtracklayer' = citation('rtracklayer'),
+    'derfinderData' = citation('derfinderData'),
+    'derfinder' = citation('derfinder')[1],
+    'GenomicAlignments' = citation('GenomicAlignments'),
+    R = citation()
+)
+write.bibtex(bibs, file = 'protocolTemplate.bib')
+bib <- read.bibtex('protocolTemplate.bib')
+names(bib) <- names(bibs)
+```
+
+This protocol was contributed by [L. Collado-Torres](http://bit.ly/LColladoTorres) as is available at [jtleek.com/protocols/](http://jtleek.com/protocols/).
+
+# Overview
+
+This short protocol shows how you can get a gene-level count matrix from BigWig files. We'll work with example data from `derfinderData` `r citep(bib[['derfinderData']])` and generate the count matrix using some custom code.
+
+
+First, lets locate a set of BigWig files from the amygdala. 
+
+```{r 'findFiles', bootstrap.show.warning = FALSE}
+## Load data
+library('derfinderData')
+
+## Locate bigWig files
+files <- dir(system.file('extdata', 'AMY', package = 'derfinderData'),  full.names = TRUE)
+names(files) <- gsub('\\.bw', '', dir(system.file('extdata', 'AMY', package = 'derfinderData')))
+head(files)
+```
+
+Next, lets define our set of genes.
+
+```{r 'getGenes', bootstrap.show.warning = FALSE, bootstrap.show.message = FALSE}
+library('TxDb.Hsapiens.UCSC.hg19.knownGene')
+## example data only has coverage for chr21, otherwise use all
+txdb <- keepSeqlevels(TxDb.Hsapiens.UCSC.hg19.knownGene, 'chr21')
+ex <- exonsBy(txdb, by = 'gene')
+```
+
+We can see that it's a GRangesList.
+
+```{r 'exploreEX'}
+class(ex)
+ex
+```
+
+We can use a similar approach to [bigwig_DEanalysis](http://lcolladotor.github.io/protocols/bigwig_DEanalysis/) but it's a little bit more complicated because we are dealing with a GRangesList instead of a GRanges object.
+
+
+First, we can create an exon level count matrix using `rtracklayer` `r citep(bib[['rtracklayer']])`.
+
+
+```{r 'exonCounts', bootstrap.show.warning = FALSE}
+## Import data and create exon count matrix
+library('rtracklayer')
+bw <- BigWigFileList(files)
+
+exons <- unlist(ex)
+counts_exons <- matrix(NA, nrow = length(exons), ncol = length(bw))
+colnames(counts_exons) <- names(bw)
+for(i in seq_len(length(bw))) {
+    ## For more than one chr, you'll need to change this a bit
+    coverage <- import(bw[[i]], as = 'RleList')$chr21
+    counts_exons[, i] <- sum(Views(coverage, ranges(exons)))
+}
+
+## Lets explore the results
+dim(counts_exons)
+head(counts_exons[, 1:6])
+```
+
+We can then summary the exon count matrix into a gene count matrix.
+
+```{r 'geneCounts'}
+## Create gene count matrix
+counts_genes <- matrix(NA, nrow = length(ex), ncol = length(bw))
+colnames(counts_genes) <- names(bw)
+for(i in seq_len(length(bw))) {
+    counts_genes[, i]  <- sapply(split(counts_exons[, i], names(exons)), sum)
+}
+
+## Explore the results
+dim(counts_genes)
+head(counts_genes[, 1:6])
+```
+
+Other approaches could be using `GenomicAlignments::summarizeOverlaps()` `r citep(bib[['GenomicAlignments']])` although the _score_ column created by `rtracklayer::import.bw()` gets ignored and you'll have to deal with it.
+
+You could also use _genomic state_ objects from `derfinder` `r citep(bib[['derfinder']])`. However, you have to deal with the complexity of exon overlaps and some missing ids as shown below.
+
+```{r 'derfinderApproach', bootstrap.show.warning = FALSE}
+library('derfinder')
+## Check makeGenomicState()
+## Exons from chr21 (hg19) included in the package
+genomicState$fullGenome[ genomicState$fullGenome$theRegion == 'exon' ]
+
+## Load hg19 full file
+load("/Users/lcollado/Dropbox/JHSPH/Code/derSoftware/GenomicState.Hsapiens.UCSC.hg19.knownGene.rda")
+## Some are NA, some have more than 1 gene id
+GenomicState.Hsapiens.UCSC.hg19.knownGene$codingGenome[ GenomicState.Hsapiens.UCSC.hg19.knownGene$codingGenome$theRegion == 'exon' ]$gene
+
+## Complicated case
+GenomicState.Hsapiens.UCSC.hg19.knownGene$fullGenome[ GenomicState.Hsapiens.UCSC.hg19.knownGene$fullGenome$theRegion == 'exon' ][10]
+```
+
+
+# References
+
+
+
+Citations made with `knitcitations` `r citep(bib[['knitcitations']])`.
+
+
+```{r 'bibliography', results='asis', echo=FALSE, cache=FALSE, bootstrap.show.warning = FALSE}
+## Print bibliography
+bibliography()
+```
+
+```{r 'cleanupBib', echo = FALSE, results = 'hide'}
+## Clean up
+file.remove('protocolTemplate.bib')
+```
+
+`R` session information
+
+```{r 'rSession', echo = FALSE}
+library('devtools')
+options(width = 120)
+session_info()
+```
+
+
+Date this protocol was last modified: `r Sys.time()`.
