@@ -37,6 +37,8 @@ This protocol was contributed by [L. Collado-Torres](http://bit.ly/LColladoTorre
 This short protocol shows how you can get a gene-level count matrix from BigWig files. We'll work with example data from `derfinderData` `r citep(bib[['derfinderData']])` and generate the count matrix using some custom code.
 
 
+# Example
+
 First, lets locate a set of BigWig files from the amygdala. 
 
 ```{r 'findFiles', bootstrap.show.warning = FALSE}
@@ -55,6 +57,8 @@ Next, lets define our set of genes.
 library('TxDb.Hsapiens.UCSC.hg19.knownGene')
 ## example data only has coverage for chr21, otherwise use all
 txdb <- keepSeqlevels(TxDb.Hsapiens.UCSC.hg19.knownGene, 'chr21')
+
+## Subset set of genes if you are not using all of them
 ex <- exonsBy(txdb, by = 'gene')
 ```
 
@@ -83,7 +87,17 @@ for(i in seq_len(length(bw))) {
     ## For more than one chr, you'll need to change this a bit
     coverage <- import(bw[[i]], as = 'RleList')$chr21
     counts_exons[, i] <- sum(Views(coverage, ranges(exons)))
+    
+    ## For more than one chr, you can use this code per chr or...
+    ## something like this.
+    # coverage <- import(bw[[i]], as = 'RleList')
+    # for(chr in unique(seqnames(exons))) {
+    #     counts_exons[seqnames(exons) == chr, i] <- sum(Views(coverage[[chr]], ranges(exons[seqnames(exons) == chr])))
+    # }
 }
+
+## Divide by read length and round to integer numbers
+counts_exons <- round(counts_exons / 76, 0)
 
 ## Lets explore the results
 dim(counts_exons)
@@ -100,12 +114,29 @@ for(i in seq_len(length(bw))) {
     counts_genes[, i]  <- sapply(split(counts_exons[, i], names(exons)), sum)
 }
 
+## Add gene names
+rownames(counts_genes) <- names(ex)
+
 ## Explore the results
 dim(counts_genes)
 head(counts_genes[, 1:6])
 ```
 
-Other approaches could be using `GenomicAlignments::summarizeOverlaps()` `r citep(bib[['GenomicAlignments']])` although the _score_ column created by `rtracklayer::import.bw()` gets ignored and you'll have to deal with it.
+If you are interested in normalizing the gene counts to those from a given library size, say 40 million, you can use code like this to do so. You will need the total number of mapped reads. If you don't have that number, you can either calculate the sum of the coverage by sample and divide it by the read length or use the gene counts sum (by sample).
+
+```{r 'normCounts'}
+## You might also want to normalize to a given library size, say 40 million
+# here is a proxy for total mapped reads, although you might
+# have that data somewhere else
+totalMapped <- colSums(counts_genes)
+
+norm_counts <- round(counts_genes / totalMapped * 4e7, 0)
+head(norm_counts[, 1:6])
+```
+
+# Misc
+
+Other approaches for creating a gene-level count matrix from BigWig files could involve using `GenomicAlignments::summarizeOverlaps()` `r citep(bib[['GenomicAlignments']])` although the _score_ column created by `rtracklayer::import.bw()` gets ignored and you'll have to deal with it.
 
 You could also use _genomic state_ objects from `derfinder` `r citep(bib[['derfinder']])`. However, you have to deal with the complexity of exon overlaps and some missing ids as shown below.
 

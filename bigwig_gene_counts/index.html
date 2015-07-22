@@ -869,6 +869,7 @@
 <p>This protocol was contributed by <a href="http://bit.ly/LColladoTorres">L. Collado-Torres</a> as is available at <a href="http://jtleek.com/protocols/">jtleek.com/protocols/</a>.</p>
 <h1>Overview</h1>
 <p>This short protocol shows how you can get a gene-level count matrix from BigWig files. We'll work with example data from <code>derfinderData</code> <a id='cite-derfinderData'></a>(<a href='https://github.com/lcolladotor/derfinderData'>Collado-Torres, Jaffe, and Leek, 2015</a>) and generate the count matrix using some custom code.</p>
+<h1>Example</h1>
 <p>First, lets locate a set of BigWig files from the amygdala.</p>
 <div class="row">
 <button class="source R toggle btn btn-xs btn-primary">
@@ -1004,6 +1005,8 @@ head(files)</code></pre>
 </button>
 <pre style=""><code class="source r">## example data only has coverage for chr21, otherwise use all
 txdb <- keepSeqlevels(TxDb.Hsapiens.UCSC.hg19.knownGene, 'chr21')
+
+## Subset set of genes if you are not using all of them
 ex <- exonsBy(txdb, by = 'gene')</code></pre>
 </div>
 <p>We can see that it's a GRangesList.</p>
@@ -1081,7 +1084,17 @@ for(i in seq_len(length(bw))) {
     ## For more than one chr, you'll need to change this a bit
     coverage <- import(bw[[i]], as = 'RleList')$chr21
     counts_exons[, i] <- sum(Views(coverage, ranges(exons)))
+    
+    ## For more than one chr, you can use this code per chr or...
+    ## something like this.
+    # coverage <- import(bw[[i]], as = 'RleList')
+    # for(chr in unique(seqnames(exons))) {
+    #     counts_exons[seqnames(exons) == chr, i] <- sum(Views(coverage[[chr]], ranges(exons[seqnames(exons) == chr])))
+    # }
 }
+
+## Divide by read length and round to integer numbers
+counts_exons <- round(counts_exons / 76, 0)
 
 ## Lets explore the results
 dim(counts_exons)</code></pre>
@@ -1098,12 +1111,12 @@ dim(counts_exons)</code></pre>
 <span class="glyphicon glyphicon-chevron-down"></span> R output
 </button>
 <pre style=""><code class="output r">##      HSB113 HSB123 HSB126 HSB130 HSB135 HSB136
-## [1,]      0   0.00   0.00   0.00   3.00   6.00
-## [2,]      0   0.00   0.00   0.00   0.00   0.00
-## [3,]      0   0.00   0.00   0.00   0.00   1.92
-## [4,]      0   0.00   0.00   0.00   0.00   0.00
-## [5,]      3  65.51 195.23  99.37 215.77  96.73
-## [6,]      3 249.75 567.94 360.03 418.70 250.37
+## [1,]      0      0      0      0      0      0
+## [2,]      0      0      0      0      0      0
+## [3,]      0      0      0      0      0      0
+## [4,]      0      0      0      0      0      0
+## [5,]      0      1      3      1      3      1
+## [6,]      0      3      7      5      6      3
 </code></pre>
 </div>
 <p>We can then summary the exon count matrix into a gene count matrix.</p>
@@ -1117,6 +1130,9 @@ colnames(counts_genes) <- names(bw)
 for(i in seq_len(length(bw))) {
     counts_genes[, i]  <- sapply(split(counts_exons[, i], names(exons)), sum)
 }
+
+## Add gene names
+rownames(counts_genes) <- names(ex)
 
 ## Explore the results
 dim(counts_genes)</code></pre>
@@ -1132,16 +1148,41 @@ dim(counts_genes)</code></pre>
 <button class="output R toggle btn btn-xs btn-success">
 <span class="glyphicon glyphicon-chevron-down"></span> R output
 </button>
-<pre style=""><code class="output r">##      HSB113 HSB123  HSB126  HSB130  HSB135  HSB136
-## [1,]   0.00   0.00    0.00    0.00    3.00    7.92
-## [2,]   0.00   0.00    0.00    0.00    0.00    0.00
-## [3,]  46.92 637.03 1179.36  719.36 1518.52  462.90
-## [4,] 357.86 840.28 1248.60 2022.03  507.39 1618.17
-## [5,]   0.00   0.00    0.00    0.00    0.00    0.00
-## [6,]   0.00   0.00    0.00    0.00    0.00    0.00
+<pre style=""><code class="output r">##           HSB113 HSB123 HSB126 HSB130 HSB135 HSB136
+## 100129027      0      0      0      0      0      0
+## 100131902      0      0      0      0      0      0
+## 100132288      0      8     16      9     21      5
+## 100133286      5     11     16     27      7     21
+## 100151643      0      0      0      0      0      0
+## 100288287      0      0      0      0      0      0
 </code></pre>
 </div>
-<p>Other approaches could be using <code>GenomicAlignments::summarizeOverlaps()</code> <a id='cite-GenomicAlignments'></a>(<a href='http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1003118'>Lawrence, Huber, Pagès, Aboyoun, et al., 2013</a>) although the <em>score</em> column created by <code>rtracklayer::import.bw()</code> gets ignored and you'll have to deal with it.</p>
+<p>If you are interested in normalizing the gene counts to those from a given library size, say 40 million, you can use code like this to do so. You will need the total number of mapped reads. If you don't have that number, you can either calculate the sum of the coverage by sample and divide it by the read length or use the gene counts sum (by sample).</p>
+<div class="row">
+<button class="source R toggle btn btn-xs btn-primary">
+<span class="glyphicon glyphicon-chevron-down"></span> R source
+</button>
+<pre style=""><code class="source r">## You might also want to normalize to a given library size, say 40 million
+# here is a proxy for total mapped reads, although you might
+# have that data somewhere else
+totalMapped <- colSums(counts_genes)
+
+norm_counts <- round(counts_genes / totalMapped * 4e7, 0)
+head(norm_counts[, 1:6])</code></pre>
+<button class="output R toggle btn btn-xs btn-success">
+<span class="glyphicon glyphicon-chevron-down"></span> R output
+</button>
+<pre style=""><code class="output r">##           HSB113 HSB123 HSB126 HSB130 HSB135 HSB136
+## 100129027      0      0      0      0      0      0
+## 100131902      0      0      0      0      0      0
+## 100132288      0  37480  84623  47443  98384  26445
+## 100133286  24021  61324  87217 129714  39024 114473
+## 100151643      0      0      0      0      0      0
+## 100288287      0      0      0      0      0      0
+</code></pre>
+</div>
+<h1>Misc</h1>
+<p>Other approaches for creating a gene-level count matrix from BigWig files could involve using <code>GenomicAlignments::summarizeOverlaps()</code> <a id='cite-GenomicAlignments'></a>(<a href='http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1003118'>Lawrence, Huber, Pagès, Aboyoun, et al., 2013</a>) although the <em>score</em> column created by <code>rtracklayer::import.bw()</code> gets ignored and you'll have to deal with it.</p>
 <p>You could also use <em>genomic state</em> objects from <code>derfinder</code> <a id='cite-derfinder'></a>(<a href='http://www.biorxiv.org/content/early/2015/02/19/015370.abstract'>Collado-Torres, Frazee, Love, Irizarry, et al., 2015</a>). However, you have to deal with the complexity of exon overlaps and some missing ids as shown below.</p>
 <div class="row">
 <button class="source R toggle btn btn-xs btn-primary">
@@ -1397,7 +1438,7 @@ GenomicState.Hsapiens.UCSC.hg19.knownGene$fullGenome[ GenomicState.Hsapiens.UCSC
 ##  zlibbioc                            1.15.0      2015-04-17 Bioconductor
 </code></pre>
 </div>
-Date this protocol was last modified: 2015-07-22 12:39:25.
+Date this protocol was last modified: 2015-07-22 13:41:19.
 </div>
 </div>
 <div class="navbar navbar-fixed-bottom navbar-inverse">
