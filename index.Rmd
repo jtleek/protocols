@@ -18,7 +18,8 @@ Here you can find a set of lab analysis protocols.
 
 * [Analyzing RNA-seq data with the "Tuxedo" tools](tophat_cufflinks/)
 * [eQTL analysis with Ballgown](ballgown_eqtl/)
-* [Creating a count matrix from BigWig files](bigwig_DEanalysis/)
+* [Exon differential expression analysis from BigWig files](bigwig_DEanalysis/)
+* [Creating gene-level count matrices from BigWig files](bigwig_gene_counts/)
 
 ### Package development
 
