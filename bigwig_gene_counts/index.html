@@ -1004,7 +1004,8 @@ head(files)</code></pre>
 <span class="glyphicon glyphicon-chevron-down"></span> R source
 </button>
 <pre style=""><code class="source r">## example data only has coverage for chr21, otherwise use all
-txdb <- keepSeqlevels(TxDb.Hsapiens.UCSC.hg19.knownGene, 'chr21')
+## but we'll add chr22 to exemplify using more than one chromosome
+txdb <- keepSeqlevels(TxDb.Hsapiens.UCSC.hg19.knownGene, c('chr21', 'chr22'))
 
 ## Subset set of genes if you are not using all of them
 ex <- exonsBy(txdb, by = 'gene')</code></pre>
@@ -1029,34 +1030,33 @@ ex <- exonsBy(txdb, by = 'gene')</code></pre>
 <button class="output R toggle btn btn-xs btn-success">
 <span class="glyphicon glyphicon-chevron-down"></span> R output
 </button>
-<pre style=""><code class="output r">## GRangesList object of length 296:
-## $100129027 
+<pre style=""><code class="output r">## GRangesList object of length 834:
+## $100037417 
 ## GRanges object with 3 ranges and 2 metadata columns:
 ##       seqnames               ranges strand |   exon_id   exon_name
 ##          <Rle>            <IRanges>  <Rle> | <integer> <character>
-##   [1]    chr21 [47247755, 47251155]      - |    260437        <NA>
-##   [2]    chr21 [47252522, 47252572]      - |    260438        <NA>
-##   [3]    chr21 [47256200, 47256333]      - |    260439        <NA>
+##   [1]    chr22 [24309026, 24309210]      + |    261721        <NA>
+##   [2]    chr22 [24309574, 24309749]      + |    261722        <NA>
+##   [3]    chr22 [24313475, 24314748]      + |    261723        <NA>
 ## 
-## $100131902 
+## $100126318 
 ## GRanges object with 1 range and 2 metadata columns:
 ##       seqnames               ranges strand | exon_id exon_name
-##   [1]    chr21 [31661463, 31661832]      - |  259463      <NA>
+##   [1]    chr22 [22007270, 22007347]      + |  261087      <NA>
 ## 
-## $100132288 
-## GRanges object with 6 ranges and 2 metadata columns:
-##       seqnames             ranges strand | exon_id exon_name
-##   [1]    chr21 [9907189, 9907492]      - |  259089      <NA>
-##   [2]    chr21 [9907189, 9908432]      - |  259090      <NA>
-##   [3]    chr21 [9909047, 9909277]      - |  259091      <NA>
-##   [4]    chr21 [9915250, 9916547]      - |  259092      <NA>
-##   [5]    chr21 [9966322, 9966380]      - |  259094      <NA>
-##   [6]    chr21 [9968516, 9968593]      - |  259095      <NA>
+## $100128531 
+## GRanges object with 5 ranges and 2 metadata columns:
+##       seqnames               ranges strand | exon_id exon_name
+##   [1]    chr22 [25498384, 25498885]      - |  264944      <NA>
+##   [2]    chr22 [25505968, 25506085]      - |  264945      <NA>
+##   [3]    chr22 [25506925, 25506964]      - |  264946      <NA>
+##   [4]    chr22 [25508154, 25508390]      - |  264947      <NA>
+##   [5]    chr22 [25508584, 25508659]      - |  264948      <NA>
 ## 
 ## ...
-## <293 more elements>
+## <831 more elements>
 ## -------
-## seqinfo: 1 sequence from hg19 genome
+## seqinfo: 2 sequences from hg19 genome
 </code></pre>
 </div>
 <p>We can use a similar approach to <a href="http://lcolladotor.github.io/protocols/bigwig_DEanalysis/">bigwig_DEanalysis</a> but it's a little bit more complicated because we are dealing with a GRangesList instead of a GRanges object.</p>
@@ -1078,19 +1078,20 @@ library('rtracklayer')</code></pre>
 <pre style=""><code class="source r">bw <- BigWigFileList(files)
 
 exons <- unlist(ex)
-counts_exons <- matrix(NA, nrow = length(exons), ncol = length(bw))
+## Alternatively leave as NA instead of 0
+counts_exons <- matrix(0, nrow = length(exons), ncol = length(bw))
 colnames(counts_exons) <- names(bw)
 for(i in seq_len(length(bw))) {
-    ## For more than one chr, you'll need to change this a bit
-    coverage <- import(bw[[i]], as = 'RleList')$chr21
-    counts_exons[, i] <- sum(Views(coverage, ranges(exons)))
-    
-    ## For more than one chr, you can use this code per chr or...
-    ## something like this.
-    # coverage <- import(bw[[i]], as = 'RleList')
-    # for(chr in unique(seqnames(exons))) {
-    #     counts_exons[seqnames(exons) == chr, i] <- sum(Views(coverage[[chr]], ranges(exons[seqnames(exons) == chr])))
-    # }
+    coverage <- import(bw[[i]], as = 'RleList')
+    for(chr in as.character(unique(seqnames(exons)))) {
+        if(!is.null(coverage[[chr]])) {
+            ## Proceed only if there's data for that chr
+            ## Otherwise, leave as 0. When defining counts_exons you can use
+            ## NA instead of 0 if you prefer to distinguish the a coverage of
+            ## 0 versus a case where there's no data.
+            counts_exons[as.logical(seqnames(exons) == chr), i] <- sum(Views(coverage[[chr]], ranges(exons[seqnames(exons) == chr])))
+        }
+    }
 }
 
 ## Divide by read length and round to integer numbers
@@ -1101,22 +1102,22 @@ dim(counts_exons)</code></pre>
 <button class="output R toggle btn btn-xs btn-success">
 <span class="glyphicon glyphicon-chevron-down"></span> R output
 </button>
-<pre style=""><code class="output r">## [1] 2822   12
+<pre style=""><code class="output r">## [1] 8585   12
 </code></pre>
 <button class="source R toggle btn btn-xs btn-primary">
 <span class="glyphicon glyphicon-chevron-down"></span> R source
 </button>
-<pre style=""><code class="source r">head(counts_exons[, 1:6])</code></pre>
+<pre style=""><code class="source r">counts_exons[35:40, 1:6]</code></pre>
 <button class="output R toggle btn btn-xs btn-success">
 <span class="glyphicon glyphicon-chevron-down"></span> R output
 </button>
 <pre style=""><code class="output r">##      HSB113 HSB123 HSB126 HSB130 HSB135 HSB136
-## [1,]      0      0      0      0      0      0
-## [2,]      0      0      0      0      0      0
-## [3,]      0      0      0      0      0      0
-## [4,]      0      0      0      0      0      0
-## [5,]      0      1      3      1      3      1
-## [6,]      0      3      7      5      6      3
+## [1,]      0      1      3      1      3      1
+## [2,]      0      3      7      5      6      3
+## [3,]      0      1      2      1      2      0
+## [4,]      0      3      4      2     10      1
+## [5,]      0      0      0      0      0      0
+## [6,]      0      0      0      0      0      0
 </code></pre>
 </div>
 <p>We can then summary the exon count matrix into a gene count matrix.</p>
@@ -1139,22 +1140,22 @@ dim(counts_genes)</code></pre>
 <button class="output R toggle btn btn-xs btn-success">
 <span class="glyphicon glyphicon-chevron-down"></span> R output
 </button>
-<pre style=""><code class="output r">## [1] 296  12
+<pre style=""><code class="output r">## [1] 834  12
 </code></pre>
 <button class="source R toggle btn btn-xs btn-primary">
 <span class="glyphicon glyphicon-chevron-down"></span> R source
 </button>
-<pre style=""><code class="source r">head(counts_genes[, 1:6])</code></pre>
+<pre style=""><code class="source r">tail(counts_genes[, 1:6])</code></pre>
 <button class="output R toggle btn btn-xs btn-success">
 <span class="glyphicon glyphicon-chevron-down"></span> R output
 </button>
-<pre style=""><code class="output r">##           HSB113 HSB123 HSB126 HSB130 HSB135 HSB136
-## 100129027      0      0      0      0      0      0
-## 100131902      0      0      0      0      0      0
-## 100132288      0      8     16      9     21      5
-## 100133286      5     11     16     27      7     21
-## 100151643      0      0      0      0      0      0
-## 100288287      0      0      0      0      0      0
+<pre style=""><code class="output r">##      HSB113 HSB123 HSB126 HSB130 HSB135 HSB136
+## 9946     39     27     26     42     38     21
+## 9978      0      0      0      0      0      0
+## 9980     22     16     12     28      9      6
+## 9992      0      1      1      1      1      0
+## 9993      0      0      0      0      0      0
+## 9997      0      0      0      0      0      0
 </code></pre>
 </div>
 <p>If you are interested in normalizing the gene counts to those from a given library size, say 40 million, you can use code like this to do so. You will need the total number of mapped reads. If you don't have that number, you can either calculate the sum of the coverage by sample and divide it by the read length or use the gene counts sum (by sample).</p>
@@ -1168,17 +1169,17 @@ dim(counts_genes)</code></pre>
 totalMapped <- colSums(counts_genes)
 
 norm_counts <- round(counts_genes / totalMapped * 4e7, 0)
-head(norm_counts[, 1:6])</code></pre>
+tail(norm_counts[, 1:6])</code></pre>
 <button class="output R toggle btn btn-xs btn-success">
 <span class="glyphicon glyphicon-chevron-down"></span> R output
 </button>
-<pre style=""><code class="output r">##           HSB113 HSB123 HSB126 HSB130 HSB135 HSB136
-## 100129027      0      0      0      0      0      0
-## 100131902      0      0      0      0      0      0
-## 100132288      0  37480  84623  47443  98384  26445
-## 100133286  24021  61324  87217 129714  39024 114473
-## 100151643      0      0      0      0      0      0
-## 100288287      0      0      0      0      0      0
+<pre style=""><code class="output r">##      HSB113 HSB123 HSB126 HSB130 HSB135 HSB136
+## 9946 191435 142800 127623 222134 186526 111067
+## 9978      0      0      0      0      0      0
+## 9980 115973  83333  63258 145833  47443  31250
+## 9992      0   5968   4804   5968   4804      0
+## 9993      0      0      0      0      0      0
+## 9997      0      0      0      0      0      0
 </code></pre>
 </div>
 <h1>Misc</h1>
@@ -1438,7 +1439,7 @@ GenomicState.Hsapiens.UCSC.hg19.knownGene$fullGenome[ GenomicState.Hsapiens.UCSC
 ##  zlibbioc                            1.15.0      2015-04-17 Bioconductor
 </code></pre>
 </div>
-Date this protocol was last modified: 2015-07-22 13:41:19.
+Date this protocol was last modified: 2015-07-23 10:52:26.
 </div>
 </div>
 <div class="navbar navbar-fixed-bottom navbar-inverse">

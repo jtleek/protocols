@@ -56,7 +56,8 @@ Next, lets define our set of genes.
 ```{r 'getGenes', bootstrap.show.warning = FALSE, bootstrap.show.message = FALSE}
 library('TxDb.Hsapiens.UCSC.hg19.knownGene')
 ## example data only has coverage for chr21, otherwise use all
-txdb <- keepSeqlevels(TxDb.Hsapiens.UCSC.hg19.knownGene, 'chr21')
+## but we'll add chr22 to exemplify using more than one chromosome
+txdb <- keepSeqlevels(TxDb.Hsapiens.UCSC.hg19.knownGene, c('chr21', 'chr22'))
 
 ## Subset set of genes if you are not using all of them
 ex <- exonsBy(txdb, by = 'gene')
@@ -81,19 +82,20 @@ library('rtracklayer')
 bw <- BigWigFileList(files)
 
 exons <- unlist(ex)
-counts_exons <- matrix(NA, nrow = length(exons), ncol = length(bw))
+## Alternatively leave as NA instead of 0
+counts_exons <- matrix(0, nrow = length(exons), ncol = length(bw))
 colnames(counts_exons) <- names(bw)
 for(i in seq_len(length(bw))) {
-    ## For more than one chr, you'll need to change this a bit
-    coverage <- import(bw[[i]], as = 'RleList')$chr21
-    counts_exons[, i] <- sum(Views(coverage, ranges(exons)))
-    
-    ## For more than one chr, you can use this code per chr or...
-    ## something like this.
-    # coverage <- import(bw[[i]], as = 'RleList')
-    # for(chr in unique(seqnames(exons))) {
-    #     counts_exons[seqnames(exons) == chr, i] <- sum(Views(coverage[[chr]], ranges(exons[seqnames(exons) == chr])))
-    # }
+    coverage <- import(bw[[i]], as = 'RleList')
+    for(chr in as.character(unique(seqnames(exons)))) {
+        if(!is.null(coverage[[chr]])) {
+            ## Proceed only if there's data for that chr
+            ## Otherwise, leave as 0. When defining counts_exons you can use
+            ## NA instead of 0 if you prefer to distinguish the a coverage of
+            ## 0 versus a case where there's no data.
+            counts_exons[as.logical(seqnames(exons) == chr), i] <- sum(Views(coverage[[chr]], ranges(exons[seqnames(exons) == chr])))
+        }
+    }
 }
 
 ## Divide by read length and round to integer numbers
@@ -101,7 +103,7 @@ counts_exons <- round(counts_exons / 76, 0)
 
 ## Lets explore the results
 dim(counts_exons)
-head(counts_exons[, 1:6])
+counts_exons[35:40, 1:6]
 ```
 
 We can then summary the exon count matrix into a gene count matrix.
@@ -119,7 +121,7 @@ rownames(counts_genes) <- names(ex)
 
 ## Explore the results
 dim(counts_genes)
-head(counts_genes[, 1:6])
+tail(counts_genes[, 1:6])
 ```
 
 If you are interested in normalizing the gene counts to those from a given library size, say 40 million, you can use code like this to do so. You will need the total number of mapped reads. If you don't have that number, you can either calculate the sum of the coverage by sample and divide it by the read length or use the gene counts sum (by sample).
@@ -131,7 +133,7 @@ If you are interested in normalizing the gene counts to those from a given libra
 totalMapped <- colSums(counts_genes)
 
 norm_counts <- round(counts_genes / totalMapped * 4e7, 0)
-head(norm_counts[, 1:6])
+tail(norm_counts[, 1:6])
 ```
 
 # Misc
